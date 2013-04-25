@@ -7,7 +7,7 @@
     <ProjectGuid>{501BE151-4B8C-4355-88DC-3AEF1921B2D7}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ConsoleApplication1</RootNamespace>
+    <RootNamespace>Mirantis.Murano</RootNamespace>
     <AssemblyName>ExecutionPlanGenerator</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

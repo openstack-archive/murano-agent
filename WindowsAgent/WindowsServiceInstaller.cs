@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.ServiceProcess;
 
-namespace Mirantis.Keero.WindowsAgent
+namespace Mirantis.Murano.WindowsAgent
 {
 	[RunInstaller(true)]
 	public class WindowsServiceInstaller : Installer

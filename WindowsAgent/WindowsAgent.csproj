@@ -7,7 +7,7 @@
     <ProjectGuid>{F7E2A8D5-6D24-4651-A4BC-1024D59F4903}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Mirantis.Keero.WindowsAgent</RootNamespace>
+    <RootNamespace>Mirantis.Murano.WindowsAgent</RootNamespace>
     <AssemblyName>WindowsAgent</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -62,9 +62,7 @@
     <Compile Include="ExecutionPlan.cs" />
     <Compile Include="MqMessage.cs" />
     <Compile Include="PlanExecutor.cs" />
-    <Compile Include="Program.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RabbitMqClient.cs" />
     <Compile Include="ServiceManager.cs" />

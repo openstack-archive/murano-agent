@@ -9,9 +9,9 @@ using System.Text;
 using System.Threading;
 using NLog;
 
-namespace Mirantis.Keero.WindowsAgent
+namespace Mirantis.Murano.WindowsAgent
 {
-	[DisplayName("Keero Agent")]
+	[DisplayName("Murano Agent")]
 	sealed public class Program : WindowsService
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger();

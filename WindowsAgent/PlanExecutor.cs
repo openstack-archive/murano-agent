@@ -8,7 +8,7 @@ using System.Text;
 using NLog;
 using Newtonsoft.Json;
 
-namespace Mirantis.Keero.WindowsAgent
+namespace Mirantis.Murano.WindowsAgent
 {
 	class PlanExecutor
 	{

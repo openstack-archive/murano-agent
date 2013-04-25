@@ -4,7 +4,7 @@ using System.Reflection;
 using System.ServiceProcess;
 using NLog;
 
-namespace Mirantis.Keero.WindowsAgent
+namespace Mirantis.Murano.WindowsAgent
 {
     public class ServiceManager
     {

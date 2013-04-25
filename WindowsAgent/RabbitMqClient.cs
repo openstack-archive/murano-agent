@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using NLog;
 using RabbitMQ.Client;
 
-namespace Mirantis.Keero.WindowsAgent
+namespace Mirantis.Murano.WindowsAgent
 {
 	class RabbitMqClient : IDisposable
 	{

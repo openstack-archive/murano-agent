@@ -64,7 +64,7 @@ namespace Mirantis.Murano.WindowsAgent
 				}
 				var session = connection.CreateModel();
 				session.BasicQos(0, 1, false);
-				session.QueueDeclare(queueName, true, false, false, null);
+				//session.QueueDeclare(queueName, true, false, false, null);
 				var consumer = new QueueingBasicConsumer(session);
 				var consumeTag = session.BasicConsume(queueName, false, consumer);
 				var e = (RabbitMQ.Client.Events.BasicDeliverEventArgs) consumer.Queue.Dequeue();

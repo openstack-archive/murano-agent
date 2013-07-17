@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using NLog;
@@ -18,13 +21,29 @@ namespace Mirantis.Murano.WindowsAgent
 
 		static RabbitMqClient()
 		{
-			connectionFactory = new ConnectionFactory {
+		    var ssl = new SslOption {
+		        Enabled = bool.Parse(ConfigurationManager.AppSettings["rabbitmq.ssl"] ?? "false"),
+		        Version = SslProtocols.Default,
+                AcceptablePolicyErrors = bool.Parse(ConfigurationManager.AppSettings["rabbitmq.allowInvalidCA"] ?? "true") ? 
+                    SslPolicyErrors.RemoteCertificateNameMismatch : SslPolicyErrors.None
+		    };
+
+		    var sslServerName = ConfigurationManager.AppSettings["rabbitmq.sslServerName"] ?? "";
+		    ssl.ServerName = sslServerName;
+            if (String.IsNullOrWhiteSpace(sslServerName))
+            {
+                ssl.AcceptablePolicyErrors |= SslPolicyErrors.RemoteCertificateNameMismatch;
+            }
+
+            connectionFactory = new ConnectionFactory {
                 HostName = ConfigurationManager.AppSettings["rabbitmq.host"] ?? "localhost",
                 UserName = ConfigurationManager.AppSettings["rabbitmq.user"] ?? "guest",
                 Password = ConfigurationManager.AppSettings["rabbitmq.password"] ??"guest",
-                Protocol = Protocols.FromEnvironment(),
+                Protocol = Protocols.DefaultProtocol,
                 VirtualHost = ConfigurationManager.AppSettings["rabbitmq.vhost"] ?? "/",
-                RequestedHeartbeat = 10
+                Port = int.Parse(ConfigurationManager.AppSettings["rabbitmq.port"] ?? "5672"),
+                RequestedHeartbeat = 10,
+                Ssl = ssl
             };
 		}
 		
@@ -45,7 +64,7 @@ namespace Mirantis.Murano.WindowsAgent
 				}
 				var session = connection.CreateModel();
 				session.BasicQos(0, 1, false);
-				//session.QueueDeclare(queueName, true, false, false, null);
+				session.QueueDeclare(queueName, true, false, false, null);
 				var consumer = new QueueingBasicConsumer(session);
 				var consumeTag = session.BasicConsume(queueName, false, consumer);
 				var e = (RabbitMQ.Client.Events.BasicDeliverEventArgs) consumer.Queue.Dequeue();

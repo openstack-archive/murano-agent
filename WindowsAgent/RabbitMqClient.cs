@@ -25,7 +25,7 @@ namespace Mirantis.Murano.WindowsAgent
 		        Enabled = bool.Parse(ConfigurationManager.AppSettings["rabbitmq.ssl"] ?? "false"),
 		        Version = SslProtocols.Default,
                 AcceptablePolicyErrors = bool.Parse(ConfigurationManager.AppSettings["rabbitmq.allowInvalidCA"] ?? "true") ? 
-                    SslPolicyErrors.RemoteCertificateNameMismatch : SslPolicyErrors.None
+                    SslPolicyErrors.RemoteCertificateChainErrors : SslPolicyErrors.None
 		    };
 
 		    var sslServerName = ConfigurationManager.AppSettings["rabbitmq.sslServerName"] ?? "";

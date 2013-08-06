@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Text;
+using Newtonsoft.Json.Linq;
 using NLog;
 using Newtonsoft.Json;
 
@@ -71,7 +73,8 @@ namespace Mirantis.Murano.WindowsAgent
 					{
 						foreach (var kvp in command.Arguments)
 						{
-							psCommand.Parameters.Add(kvp.Key, kvp.Value);
+							var value = ConvertArgument(kvp.Value);
+							psCommand.Parameters.Add(kvp.Key, value);
 						}
 					}
 
@@ -148,6 +151,31 @@ namespace Mirantis.Murano.WindowsAgent
 				}
 			}
 		}
+
+		private static object ConvertArgument(object arg)
+		{
+			if (arg is JArray)
+			{
+				var array = arg as JArray;
+				return array.Select(ConvertArgument).ToArray();
+			}
+			else if (arg is JValue)
+			{
+				var value = (JValue) arg;
+				return value.Value;
+			}
+			else if (arg is JObject)
+			{
+				var dict = (JObject)arg;
+				var result = new Hashtable();
+				foreach (var item in dict)
+				{
+					result.Add(item.Key, ConvertArgument(item.Value));
+				}
+				return result;
+			}
+			return arg;
+		}
 	
 		private static object SerializePsObject(PSObject obj)
 		{
@@ -165,6 +193,10 @@ namespace Mirantis.Murano.WindowsAgent
 					}
 				}
 				return result;
+			}
+			else if (obj.BaseObject is IEnumerable<PSObject>)
+			{
+				return ((IEnumerable<PSObject>) obj.BaseObject).Select(SerializePsObject).ToArray();
 			}
 			else
 			{

@@ -30,7 +30,7 @@ namespace Mirantis.Murano.WindowsAgent
 		{
 			base.OnStart(args);
 
-			Log.Info("Version 0.4");
+			Log.Info("Version 0.5");
 
 			this.rabbitMqClient = new RabbitMqClient();
 

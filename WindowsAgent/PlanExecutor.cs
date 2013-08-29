@@ -172,7 +172,7 @@ namespace Mirantis.Murano.WindowsAgent
 					catch
 					{}
 				}
-				Log.Debug("Finished execution execution plan");
+				Log.Debug("Finished processing of execution plan");
 			}
 		}
 

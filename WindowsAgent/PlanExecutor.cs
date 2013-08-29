@@ -44,8 +44,9 @@ namespace Mirantis.Murano.WindowsAgent
 				{
 					currentResults = JsonConvert.DeserializeObject<List<ExecutionResult>>(File.ReadAllText(resultPath));
 				}
-				catch
+				catch(Exception exception)
 				{
+					Log.WarnException("Cannot deserialize previous execution result", exception);
 					currentResults = new List<ExecutionResult>();
 				}
 
@@ -57,15 +58,18 @@ namespace Mirantis.Murano.WindowsAgent
 				runSpaceInvoker.Invoke("Set-ExecutionPolicy Unrestricted");
 				if (plan.Scripts != null)
 				{
+					var index = 0;
 					foreach (var script in plan.Scripts)
 					{
 						runSpaceInvoker.Invoke(Encoding.UTF8.GetString(Convert.FromBase64String(script)));
+						Log.Debug("Loaded script #{0}", ++index);
 					}
 				}
 
 				while (plan.Commands != null && plan.Commands.Any())
 				{
 					var command = plan.Commands.First();
+					Log.Debug("Preparing to execute command {0}", command.Name);
 
 					var pipeline = runSpace.CreatePipeline();
 					var psCommand = new Command(command.Name);
@@ -83,9 +87,11 @@ namespace Mirantis.Murano.WindowsAgent
 							t => string.Format("{0}={1}", t.Key, t.Value == null ? "null" : t.Value.ToString()))));
 
 					pipeline.Commands.Add(psCommand);
+
 					try
 					{
 						var result = pipeline.Invoke();
+						Log.Debug("Command {0} executed", command.Name);
 						if (result != null)
 						{
 							currentResults.Add(new ExecutionResult {
@@ -96,10 +102,27 @@ namespace Mirantis.Murano.WindowsAgent
 					}
 					catch (Exception exception)
 					{
-						currentResults.Add(new ExecutionResult {
+						object additionInfo = null;
+						if (exception is ActionPreferenceStopException)
+						{
+							var apse = exception as ActionPreferenceStopException;
+							if (apse.ErrorRecord != null)
+							{
+								additionInfo = new {
+									ScriptStackTrace = apse.ErrorRecord.ScriptStackTrace,
+									PositionMessage = apse.ErrorRecord.InvocationInfo.PositionMessage
+								};
+								exception = apse.ErrorRecord.Exception;
+							}
+						}
+
+
+						Log.WarnException("Exception while executing command " + command.Name, exception);
+						currentResults.Add(new ExecutionResult
+						{
 							IsException = true,
 							Result = new[] {
-								exception.GetType().FullName, exception.Message
+								exception.GetType().FullName, exception.Message, command.Name, additionInfo
 							}
 						});
 						break;
@@ -129,13 +152,13 @@ namespace Mirantis.Murano.WindowsAgent
 					}
 				}
 				File.WriteAllText(resultPath, executionResult);
-
 			}
-			catch (Exception ex)
+			catch (Exception exception)
 			{
+				Log.WarnException("Exception while processing execution plan", exception);
 				File.WriteAllText(resultPath, JsonConvert.SerializeObject(new ExecutionResult {
 					IsException = true,
-					Result = ex.Message
+					Result = exception.Message
 				}, Formatting.Indented));
 			}
 			finally
@@ -149,6 +172,7 @@ namespace Mirantis.Murano.WindowsAgent
 					catch
 					{}
 				}
+				Log.Debug("Finished execution execution plan");
 			}
 		}
 

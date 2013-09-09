@@ -42,14 +42,15 @@ namespace Mirantis.Murano.WindowsAgent
 				List<ExecutionResult> currentResults = null;
 				try
 				{
-					currentResults = JsonConvert.DeserializeObject<List<ExecutionResult>>(File.ReadAllText(resultPath));
+					currentResults = File.Exists(resultPath) ? 
+						JsonConvert.DeserializeObject<List<ExecutionResult>>(File.ReadAllText(resultPath)) : 
+						new List<ExecutionResult>();
 				}
 				catch(Exception exception)
 				{
 					Log.WarnException("Cannot deserialize previous execution result", exception);
 					currentResults = new List<ExecutionResult>();
 				}
-
 
 				runSpace = RunspaceFactory.CreateRunspace();
 				runSpace.Open();

@@ -67,7 +67,6 @@ class ApplicationExecutor(object):
             raise muranoagent.exceptions.CustomException(
                 0,
                 message='Script {0} returned error code'.format(self._name),
-                additional_data= result)
+                additional_data=result)
 
         return Bunch(result)
-

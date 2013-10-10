@@ -32,6 +32,7 @@ import types
 log = logging.getLogger(__name__)
 format_version = '2.0.0'
 
+
 class MuranoAgent(service.Service):
     def __init__(self):
         self._queue = ExecutionPlanQueue()
@@ -42,8 +43,8 @@ class MuranoAgent(service.Service):
         try:
             log.debug('Loading plugin %s', name)
             __import__(name)
-        except Exception, ex:
-            log.warn('Cannot load package %s', name, exc_info=1)
+        except Exception:
+            log.warn('Cannot load package %s', name, exc_info=True)
             pass
 
     def _load(self):
@@ -56,14 +57,15 @@ class MuranoAgent(service.Service):
 
     def start(self):
         self._load()
+        msg_iterator = self._wait_plan()
         while True:
             try:
-                self._loop_func()
+                self._loop_func(msg_iterator)
             except Exception as ex:
                 log.exception(ex)
                 sleep(5)
 
-    def _loop_func(self):
+    def _loop_func(self, msg_iterator):
         result, timestamp = self._queue.get_execution_plan_result()
         if result is not None:
             if self._send_result(result):
@@ -75,7 +77,7 @@ class MuranoAgent(service.Service):
             self._run(plan)
             return
 
-        self._wait_plan()
+        msg_iterator.next()
 
     def _run(self, plan):
         with ExecutionPlanRunner(plan) as runner:
@@ -111,26 +113,44 @@ class MuranoAgent(service.Service):
         return MqClient(**connection_params)
 
     def _wait_plan(self):
-        with self._create_rmq_client() as mq:
-            with mq.open(CONF.rabbitmq.input_queue,
-                         prefetch_count=1) as subscription:
-                msg = subscription.get_message(timeout=5)
-                if msg is not None and isinstance(msg.body, dict):
-                    if 'ID' not in msg.body and msg.id:
-                        msg.body['ID'] = msg.id
-                    err = self._verify_plan(msg.body)
-                    if err is None:
-                        self._queue.put_execution_plan(msg.body)
-                    else:
-                        try:
-                            execution_result = ExecutionResult.from_error(
-                                err, Bunch(msg.body))
-                            self._send_result(execution_result)
-                        except ValueError:
-                            log.warn('Execution result is not produced')
+        delay = 5
+        while True:
+            try:
+                with self._create_rmq_client() as mq:
+                    with mq.open(CONF.rabbitmq.input_queue,
+                                 prefetch_count=1) as subscription:
+                        while True:
+                            msg = subscription.get_message(timeout=5)
+                            if msg is not None and isinstance(msg.body, dict):
+                                self._handle_message(msg)
 
-                if msg is not None:
-                    msg.ack()
+                            if msg is not None:
+                                msg.ack()
+                                yield
+                            delay = 5
+            except KeyboardInterrupt:
+                break
+            except Exception:
+                log.warn('Communication error', exc_info=True)
+                sleep(delay)
+                delay = min(delay * 1.2, 60)
+
+    def _handle_message(self, msg):
+        print msg.body
+        if 'ID' not in msg.body and msg.id:
+            msg.body['ID'] = msg.id
+        err = self._verify_plan(msg.body)
+        if err is None:
+            self._queue.put_execution_plan(msg.body)
+        else:
+            try:
+                execution_result = ExecutionResult.from_error(
+                    err, Bunch(msg.body))
+
+                self._send_result(execution_result)
+            except ValueError:
+                log.warn('Execution result is not produced')
+
 
     def _verify_plan(self, plan):
         plan_format_version = plan.get('FormatVersion', '1.0.0')

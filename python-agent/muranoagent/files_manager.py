@@ -40,7 +40,7 @@ class FilesManager(object):
         filedef = self._files[file_id]
         filename = filedef['Name']
 
-        file_folder = os.path.join(script_folder,  os.path.dirname(filename))
+        file_folder = os.path.join(script_folder, os.path.dirname(filename))
         if not os.path.exists(file_folder):
             os.makedirs(file_folder)
 

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class AgentException(Exception):
     def __init__(self, code, message=None, additional_data=None):
         self._error_code = code
@@ -32,4 +33,3 @@ class CustomException(AgentException):
     def __init__(self, code, message=None, additional_data=None):
         super(CustomException, self).__init__(
             code + 100, message, additional_data)
-

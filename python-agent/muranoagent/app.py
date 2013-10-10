@@ -32,6 +32,7 @@ import types
 log = logging.getLogger(__name__)
 format_version = '2.0.0'
 
+
 class MuranoAgent(service.Service):
     def __init__(self):
         self._queue = ExecutionPlanQueue()
@@ -42,8 +43,8 @@ class MuranoAgent(service.Service):
         try:
             log.debug('Loading plugin %s', name)
             __import__(name)
-        except Exception, ex:
-            log.warn('Cannot load package %s', name, exc_info=1)
+        except Exception:
+            log.warn('Cannot load package %s', name, exc_info=True)
             pass
 
     def _load(self):

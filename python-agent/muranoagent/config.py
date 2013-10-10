@@ -110,6 +110,3 @@ def setup_logging():
 
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
-
-
-

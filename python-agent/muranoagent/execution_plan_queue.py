@@ -82,5 +82,3 @@ class ExecutionPlanQueue(object):
     def get_execution_plan_result(self):
         return self._get_first_file(
             ExecutionPlanQueue.result_filename)
-
-

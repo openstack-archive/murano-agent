@@ -1,0 +1,64 @@
+This is a demo implementation of Murano agent.
+
+=== The scenario ===
+
+Effectively the agent only connects to an AMQP queue
+using properties from the configuration file, consumes
+all the messages from the queue, logs them and puts 
+result messages into a result queue. Result messages
+are just stubs signaling success back to the calling
+application.
+
+=== Building binaries ===
+
+Build process has been tested on Ubuntu 13.04 only for
+x86_64 architecture. Note that the distribution contains
+RabbitMQ client pre-built as a static library. It gets
+linked with demo agent object files statically. It was
+done to eliminate the need to build and install RabbitMQ
+client library separately in case of using Ubuntu 64 bit.
+
+In order to build demo agent for embedded operating systems
+based on BusyBox technology (such as Cirros) refer to
+Buildroot toolkit (http://buildroot.uclibc.org/).
+
+To build agent binary:
+make agent-binary
+
+To build test producer binary:
+make prodcer-binary
+
+To build both binaries:
+make
+
+To clean up the source directory:
+make clean
+
+=== Usage ===
+
+To run agent:
+./murano-agent <config_file> <log_file>
+
+<config_file>:
+Refer to murano-agent.conf.example file to find out
+what configuration properties are possible.
+
+<log_file>:
+Path to log file which agent writes the messages into.
+
+To run test message producer:
+./producer <host> <port> <message_rate> <message_count>
+
+<host>:
+RabbitMQ server host for the producer to connect to.
+
+<port>:
+RabbitMQ server port for the producer to connect to.
+
+<message_rate>:
+Message rate at which the producer sends messages 
+(delay in seconds between messages).
+
+<message_count>:
+A number of messages the producer should send.
+

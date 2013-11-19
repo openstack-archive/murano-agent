@@ -1,0 +1,3 @@
+include requirements.txt
+prune windows-agent
+prune python-agent

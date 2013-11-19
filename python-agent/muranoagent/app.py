@@ -144,9 +144,8 @@ class MuranoAgent(service.Service):
             self._queue.put_execution_plan(msg.body)
         else:
             try:
-                execution_result = \
-                    ExecutionResult.from_error(
-                        err, Bunch(msg.body))
+                execution_result = ExecutionResult.from_error(
+                    err, Bunch(msg.body))
 
                 self._send_result(execution_result)
             except ValueError:

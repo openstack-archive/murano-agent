@@ -2,6 +2,6 @@ pbr>=0.5.21,<1.0
 semver
 bunch
 oslo.config>=1.2.0
-http://tarballs.openstack.org/murano-common/murano-common-release-0.3.tar.gz#egg=murano-common-release-0.3
+murano-common==0.3
 iso8601
 babel

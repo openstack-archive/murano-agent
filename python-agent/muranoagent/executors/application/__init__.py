@@ -36,7 +36,7 @@ class ApplicationExecutor(object):
         self._capture_stderr = options.get('captureStderr', False)
         self._verify_exitcode = options.get('verifyExitcode', True)
 
-    def run(self, function, commandline, input=None):
+    def run(self, function, commandline='', input=None):
         dir_name = os.path.dirname(self._path)
         os.chdir(dir_name)
         app = '"{0}" {1}'.format(os.path.basename(self._path), commandline)

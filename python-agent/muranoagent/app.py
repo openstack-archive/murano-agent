@@ -22,7 +22,7 @@ from execution_result import ExecutionResult
 from openstack.common import log as logging
 from openstack.common import service
 from config import CONF
-from muranocommon.messaging import MqClient, Message
+from muranoagent.common.messaging import MqClient, Message
 from exceptions import AgentException
 from time import sleep
 from bunch import Bunch

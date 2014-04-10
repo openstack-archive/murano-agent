@@ -151,7 +151,6 @@ class MuranoAgent(service.Service):
             except ValueError:
                 log.warn('Execution result is not produced')
 
-
     def _verify_plan(self, plan):
         plan_format_version = plan.get('FormatVersion', '1.0.0')
         if semver.compare(plan_format_version, '2.0.0') > 0 or \

@@ -32,7 +32,7 @@ class Message(object):
         try:
             if message_handle:
                 self.body = anyjson.loads(message_handle.body)
-            else
+            else:
                 self.body = None
         except ValueError as e:
             self.body = None

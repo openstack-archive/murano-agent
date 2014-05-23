@@ -25,7 +25,7 @@ class Message(object):
         self._connection = connection
         self._message_handle = message_handle
         if message_handle:
-            self.id = message_handle.headers.get('message_id')
+            self.id = message_handle.properties.get('message_id')
         else:
             self.id = None
 

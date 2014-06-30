@@ -1,9 +1,10 @@
-pbr>=0.6,<1.0
+pbr>=0.6,!=0.7,<1.0
 semver
 bunch
-oslo.config>=1.2.0
+oslo.config>=1.2.1
 iso8601
 babel
 anyjson>=0.3.3
 eventlet>=0.13.0
 kombu>=2.4.8
+six>=1.7.0

@@ -21,7 +21,7 @@ from execution_plan_queue import ExecutionPlanQueue
 from execution_result import ExecutionResult
 from openstack.common import log as logging
 from openstack.common import service
-from config import CONF
+from muranoagent.common.config import CONF
 from muranoagent.common.messaging import MqClient, Message
 from exceptions import AgentException
 from time import sleep

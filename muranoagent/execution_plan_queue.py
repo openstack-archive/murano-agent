@@ -18,7 +18,7 @@ import os
 import shutil
 import time
 from bunch import Bunch
-from config import CONF
+from muranoagent.common.config import CONF
 
 
 class ExecutionPlanQueue(object):

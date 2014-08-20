@@ -27,7 +27,7 @@ if os.path.exists(os.path.join(possible_topdir,
                                '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
-from muranoagent import config
+from muranoagent.common import config
 from muranoagent.openstack.common import log
 from muranoagent.openstack.common import service
 from muranoagent.app import MuranoAgent

@@ -16,7 +16,7 @@
 import os
 import base64
 import shutil
-from config import CONF
+from muranoagent.common.config import CONF
 
 
 class FilesManager(object):

@@ -29,34 +29,44 @@ from oslo.config import cfg
 
 
 CONF = cfg.CONF
-CONF.register_cli_opt(cfg.StrOpt('storage'))
+CONF.register_cli_opt(cfg.StrOpt('storage',
+                                 default='/var/murano/plans',
+                                 help='Directory to store execution plans'))
 
 rabbit_opts = [
-    cfg.StrOpt('host', default='localhost'),
-    cfg.IntOpt('port', default=5672),
-    cfg.StrOpt('login', default='guest'),
-    cfg.StrOpt('password', default='guest'),
-    cfg.StrOpt('virtual_host', default='/'),
-    cfg.BoolOpt('ssl', default=False),
-    cfg.StrOpt('ca_certs', default=''),
-    cfg.StrOpt('result_routing_key'),
-    cfg.StrOpt('result_exchange', default=''),
-    cfg.StrOpt('input_queue', default='')
+    cfg.StrOpt('host',
+               help='The RabbitMQ broker address which used for communication '
+               'with Murano guest agents.',
+               default='localhost'),
+    cfg.IntOpt('port', help='The RabbitMQ broker port.', default=5672),
+    cfg.StrOpt('login',
+               help='The RabbitMQ login.',
+               default='guest'),
+    cfg.StrOpt('password',
+               help='The RabbitMQ password.',
+               default='guest'),
+    cfg.StrOpt('virtual_host',
+               help='The RabbitMQ virtual host.',
+               default='/'),
+    cfg.BoolOpt('ssl',
+                help='Boolean flag to enable SSL communication through the '
+                'RabbitMQ broker between murano-engine and guest agents.',
+                default=False),
+    cfg.StrOpt('ca_certs',
+               help='SSL cert file (valid only if SSL enabled).',
+               default=''),
+    cfg.StrOpt('result_routing_key',
+               help='This value should be obtained from API'),
+    cfg.StrOpt('result_exchange',
+               help='This value must be obtained from API',
+               default=''),
+    cfg.StrOpt('input_queue',
+               help='This value must be obtained from API',
+               default='')
 
 ]
 
 CONF.register_opts(rabbit_opts, group='rabbitmq')
-
-
-CONF.import_opt('verbose', 'muranoagent.openstack.common.log')
-CONF.import_opt('debug', 'muranoagent.openstack.common.log')
-CONF.import_opt('log_dir', 'muranoagent.openstack.common.log')
-CONF.import_opt('log_file', 'muranoagent.openstack.common.log')
-CONF.import_opt('log_config', 'muranoagent.openstack.common.log')
-CONF.import_opt('log_format', 'muranoagent.openstack.common.log')
-CONF.import_opt('log_date_format', 'muranoagent.openstack.common.log')
-CONF.import_opt('use_syslog', 'muranoagent.openstack.common.log')
-CONF.import_opt('syslog_log_facility', 'muranoagent.openstack.common.log')
 
 
 def parse_args(args=None, usage=None, default_config_files=None):

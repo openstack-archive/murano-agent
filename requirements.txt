@@ -8,3 +8,4 @@ anyjson>=0.3.3
 eventlet>=0.13.0
 kombu>=2.4.8
 six>=1.7.0
+stevedore>=0.14

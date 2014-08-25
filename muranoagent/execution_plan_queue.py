@@ -17,8 +17,12 @@ import json
 import os
 import shutil
 import time
-from bunch import Bunch
-from muranoagent.common.config import CONF
+
+import bunch
+
+from muranoagent.common import config
+
+CONF = config.CONF
 
 
 class ExecutionPlanQueue(object):
@@ -65,7 +69,7 @@ class ExecutionPlanQueue(object):
         if ep is None:
             return None
         ep['_timestamp'] = timestamp
-        return Bunch(ep)
+        return bunch.Bunch(ep)
 
     def put_execution_result(self, result, execution_plan):
         timestamp = execution_plan['_timestamp']

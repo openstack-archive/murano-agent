@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from message import Message
-from subscription import Subscription
-from mqclient import MqClient
+from muranoagent.common.messaging.message import Message  # noqa
+from muranoagent.common.messaging.mqclient import MqClient  # noqa
+from muranoagent.common.messaging.subscription import Subscription  # noqa
 
 __all__ = ['Message', 'Subscription', 'MqClient']

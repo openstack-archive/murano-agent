@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import os
+import sys
+
 
 # If ../muranoagent/__init__.py exists, add ../ to Python search path, so
 # it will override what happens to be installed in /usr/(local/)lib/python...
@@ -27,10 +28,10 @@ if os.path.exists(os.path.join(possible_topdir,
                                '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
+from muranoagent import app
 from muranoagent.common import config
 from muranoagent.openstack.common import log
 from muranoagent.openstack.common import service
-from muranoagent.app import MuranoAgent
 
 
 def main():
@@ -38,9 +39,9 @@ def main():
         config.parse_args()
         log.setup('muranoagent')
         launcher = service.ServiceLauncher()
-        launcher.launch_service(MuranoAgent())
+        launcher.launch_service(app.MuranoAgent())
         launcher.wait()
-    except RuntimeError, e:
+    except RuntimeError as e:
         sys.stderr.write("ERROR: %s\n" % e)
         sys.exit(1)
 

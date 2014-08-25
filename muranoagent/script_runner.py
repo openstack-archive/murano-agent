@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from muranoagent.executors import Executors
+from muranoagent import executors as exe
 
 
 class FunctionRunner(object):
@@ -29,7 +29,7 @@ class FunctionRunner(object):
 class ScriptRunner(object):
     def __init__(self, name, script_info, files_manager):
         self._name = name
-        self._executor = Executors.create_executor(script_info.Type, name)
+        self._executor = exe.Executors.create_executor(script_info.Type, name)
         self._script_info = script_info
         self._script_loaded = False
         self._files_manager = files_manager

@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import base64
+import os
 import shutil
-from muranoagent.common.config import CONF
+
+from muranoagent.common import config
+
+CONF = config.CONF
 
 
 class FilesManager(object):

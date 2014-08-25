@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from exceptions import AgentException
 import uuid
-from openstack.common import timeutils
+
+from muranoagent import exceptions as exc
+from muranoagent.openstack.common import timeutils
 
 
 class ExecutionResult(object):
@@ -46,7 +47,7 @@ class ExecutionResult(object):
             error_code = error
         elif isinstance(error, Exception):
             message = error.message
-            if isinstance(error, AgentException):
+            if isinstance(error, exc.AgentException):
                 error_code = error.error_code
                 additional_info = error.additional_data
 

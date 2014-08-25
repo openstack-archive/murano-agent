@@ -14,8 +14,8 @@
 # limitations under the License.
 
 try:
-    import win32file
     import os
+    import win32file
 
     def symlink(source, link_name):
         src = os.path.abspath(source)

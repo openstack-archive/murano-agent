@@ -14,9 +14,11 @@
 # limitations under the License.
 
 import sys
-from bunch import Bunch
-from files_manager import FilesManager
-from script_runner import ScriptRunner
+
+import bunch
+
+from muranoagent import files_manager as fm
+from muranoagent import script_runner
 
 
 class ExecutionPlanRunner(object):
@@ -24,12 +26,12 @@ class ExecutionPlanRunner(object):
         self._execution_plan = execution_plan
         self._main_script = self._prepare_script(execution_plan.Body)
         self._script_funcs = {}
-        self._files_manager = FilesManager(execution_plan)
+        self._files_manager = fm.FilesManager(execution_plan)
         self._prepare_executors(execution_plan)
 
     def run(self):
         script_globals = {
-            "args": Bunch(self._execution_plan.get('Parameters') or {})
+            "args": bunch.Bunch(self._execution_plan.get('Parameters') or {})
         }
         script_globals.update(self._script_funcs)
         exec self._main_script in script_globals
@@ -54,8 +56,8 @@ class ExecutionPlanRunner(object):
 
     def _prepare_executors(self, execution_plan):
         for key, value in execution_plan.Scripts.items():
-            self._script_funcs[key] = ScriptRunner(
-                key, Bunch(value), self._files_manager)
+            self._script_funcs[key] = script_runner.ScriptRunner(
+                key, bunch.Bunch(value), self._files_manager)
 
     @staticmethod
     def _prepare_script(body):

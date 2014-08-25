@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import wraps
-
 
 class ExecutorsRepo(object):
     def __init__(self):

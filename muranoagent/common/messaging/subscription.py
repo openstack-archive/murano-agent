@@ -19,7 +19,7 @@ import time
 
 from eventlet import patcher
 kombu = patcher.import_patched('kombu')
-from . import message
+from muranoagent.common.messaging import message
 
 
 class Subscription(object):

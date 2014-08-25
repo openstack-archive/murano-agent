@@ -18,15 +18,16 @@ import stat
 import subprocess
 import sys
 
-from muranoagent.openstack.common import log as logging
-from muranoagent.executors import executor
+import bunch
+
 import muranoagent.exceptions
-from bunch import Bunch
+from muranoagent import executors
+from muranoagent.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
-@executor('Application')
+@executors.executor('Application')
 class ApplicationExecutor(object):
     def __init__(self, name):
         self._name = name
@@ -79,4 +80,4 @@ class ApplicationExecutor(object):
                 message='Script {0} returned error code'.format(self._name),
                 additional_data=result)
 
-        return Bunch(result)
+        return bunch.Bunch(result)

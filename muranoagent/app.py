@@ -13,21 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import win32
-import sys
 import os
-from execution_plan_runner import ExecutionPlanRunner
-from execution_plan_queue import ExecutionPlanQueue
-from execution_result import ExecutionResult
-from openstack.common import log as logging
-from openstack.common import service
-from muranoagent.common.config import CONF
-from muranoagent.common.messaging import MqClient, Message
-from exceptions import AgentException
-from time import sleep
-from bunch import Bunch
-import semver
+import sys
+import time
 import types
+
+import bunch
+import semver
+
+from muranoagent.common import config
+from muranoagent.common import messaging
+from muranoagent import exceptions as exc
+from muranoagent import execution_plan_queue
+from muranoagent import execution_plan_runner
+from muranoagent import execution_result as ex_result
+from muranoagent.openstack.common import log as logging
+from muranoagent.openstack.common import service
+
+CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 format_version = '2.0.0'
@@ -35,7 +38,7 @@ format_version = '2.0.0'
 
 class MuranoAgent(service.Service):
     def __init__(self):
-        self._queue = ExecutionPlanQueue()
+        self._queue = execution_plan_queue.ExecutionPlanQueue()
         super(MuranoAgent, self).__init__()
 
     @staticmethod
@@ -63,7 +66,7 @@ class MuranoAgent(service.Service):
                 self._loop_func(msg_iterator)
             except Exception as ex:
                 LOG.exception(ex)
-                sleep(5)
+                time.sleep(5)
 
     def _loop_func(self, msg_iterator):
         result, timestamp = self._queue.get_execution_plan_result()
@@ -81,18 +84,20 @@ class MuranoAgent(service.Service):
         msg_iterator.next()
 
     def _run(self, plan):
-        with ExecutionPlanRunner(plan) as runner:
+        with execution_plan_runner.ExecutionPlanRunner(plan) as runner:
             try:
                 result = runner.run()
-                execution_result = ExecutionResult.from_result(result, plan)
+                execution_result = ex_result.ExecutionResult.from_result(
+                    result, plan)
                 self._queue.put_execution_result(execution_result, plan)
-            except Exception, ex:
-                execution_result = ExecutionResult.from_error(ex, plan)
+            except Exception as ex:
+                execution_result = ex_result.ExecutionResult.from_error(ex,
+                                                                        plan)
                 self._queue.put_execution_result(execution_result, plan)
 
     def _send_result(self, result):
         with self._create_rmq_client() as mq:
-            msg = Message()
+            msg = messaging.Message()
             msg.body = result
             msg.id = result.get('SourceID')
             mq.send(message=msg,
@@ -111,7 +116,7 @@ class MuranoAgent(service.Service):
             'ssl': rabbitmq.ssl,
             'ca_certs': rabbitmq.ca_certs.strip() or None
         }
-        return MqClient(**connection_params)
+        return messaging.MqClient(**connection_params)
 
     def _wait_plan(self):
         delay = 5
@@ -133,11 +138,11 @@ class MuranoAgent(service.Service):
                 break
             except Exception:
                 LOG.warn('Communication error', exc_info=True)
-                sleep(delay)
+                time.sleep(delay)
                 delay = min(delay * 1.2, 60)
 
     def _handle_message(self, msg):
-        print msg.body
+        print(msg.body)
         if 'ID' not in msg.body and msg.id:
             msg.body['ID'] = msg.id
         err = self._verify_plan(msg.body)
@@ -145,8 +150,8 @@ class MuranoAgent(service.Service):
             self._queue.put_execution_plan(msg.body)
         else:
             try:
-                execution_result = ExecutionResult.from_error(
-                    err, Bunch(msg.body))
+                execution_result = ex_result.ExecutionResult.from_error(
+                    err, bunch.Bunch(msg.body))
 
                 self._send_result(execution_result)
             except ValueError:
@@ -159,7 +164,7 @@ class MuranoAgent(service.Service):
             range_str = 'in range 2.0.0-{0}'.format(plan_format_version) \
                 if format_version != '2.0.0' \
                 else 'equal to {0}'.format(format_version)
-            return AgentException(
+            return exc.AgentException(
                 3,
                 'Unsupported format version {0} (must be {1})'.format(
                     plan_format_version, range_str))
@@ -167,40 +172,40 @@ class MuranoAgent(service.Service):
         for attr in ('Scripts', 'Files', 'Options'):
             if attr is plan and not isinstance(
                     plan[attr], types.DictionaryType):
-                return AgentException(
+                return exc.AgentException(
                     2, '{0} is not a dictionary'.format(attr))
 
         for name, script in plan.get('Scripts', {}).items():
             for attr in ('Type', 'EntryPoint'):
                 if attr not in script or not isinstance(
                         script[attr], types.StringTypes):
-                    return AgentException(
+                    return exc.AgentException(
                         2, 'Incorrect {0} entry in script {1}'.format(
                             attr, name))
             if not isinstance(script.get('Options', {}), types.DictionaryType):
-                return AgentException(
+                return exc.AgentException(
                     2, 'Incorrect Options entry in script {0}'.format(name))
 
             if script['EntryPoint'] not in plan.get('Files', {}):
-                return AgentException(
+                return exc.AgentException(
                     2, 'Script {0} misses entry point {1}'.format(
                         name, script['EntryPoint']))
 
             for additional_file in script.get('Files', []):
                 if additional_file not in plan.get('Files', {}):
-                    return AgentException(
+                    return exc.AgentException(
                         2, 'Script {0} misses file {1}'.format(
                             name, additional_file))
 
         for key, plan_file in plan.get('Files', {}).items():
             for attr in ('BodyType', 'Body', 'Name'):
                 if attr not in plan_file:
-                    return AgentException(
+                    return exc.AgentException(
                         2, 'Incorrect {0} entry in file {1}'.format(
                             attr, key))
 
             if plan_file['BodyType'] not in ('Text', 'Base64'):
-                return AgentException(
+                return exc.AgentException(
                     2, 'Incorrect BodyType in file {1}'.format(key))
 
         return None

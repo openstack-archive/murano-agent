@@ -25,8 +25,7 @@ import sys
 
 from oslo.config import cfg
 
-#from muranoagent import __version__ as version
-
+from muranoagent import version
 
 CONF = cfg.CONF
 CONF.register_cli_opt(cfg.StrOpt('storage',
@@ -70,9 +69,10 @@ CONF.register_opts(rabbit_opts, group='rabbitmq')
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
+    version_string = version.version_info.version_string()
     CONF(args=args,
          project='muranoagent',
-         #version=version,
+         version=version_string,
          usage=usage,
          default_config_files=default_config_files)
 

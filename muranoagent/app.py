@@ -29,7 +29,7 @@ from bunch import Bunch
 import semver
 import types
 
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 format_version = '2.0.0'
 
 
@@ -41,10 +41,10 @@ class MuranoAgent(service.Service):
     @staticmethod
     def _load_package(name):
         try:
-            log.debug('Loading plugin %s', name)
+            LOG.debug('Loading plugin %s', name)
             __import__(name)
         except Exception:
-            log.warn('Cannot load package %s', name, exc_info=True)
+            LOG.warn('Cannot load package %s', name, exc_info=True)
             pass
 
     def _load(self):
@@ -62,7 +62,7 @@ class MuranoAgent(service.Service):
             try:
                 self._loop_func(msg_iterator)
             except Exception as ex:
-                log.exception(ex)
+                LOG.exception(ex)
                 sleep(5)
 
     def _loop_func(self, msg_iterator):
@@ -74,6 +74,7 @@ class MuranoAgent(service.Service):
 
         plan = self._queue.get_execution_plan()
         if plan is not None:
+            LOG.debug("Got an execution plan '{0}':".format(str(plan)))
             self._run(plan)
             return
 
@@ -131,7 +132,7 @@ class MuranoAgent(service.Service):
             except KeyboardInterrupt:
                 break
             except Exception:
-                log.warn('Communication error', exc_info=True)
+                LOG.warn('Communication error', exc_info=True)
                 sleep(delay)
                 delay = min(delay * 1.2, 60)
 
@@ -149,7 +150,7 @@ class MuranoAgent(service.Service):
 
                 self._send_result(execution_result)
             except ValueError:
-                log.warn('Execution result is not produced')
+                LOG.warn('Execution result is not produced')
 
     def _verify_plan(self, plan):
         plan_format_version = plan.get('FormatVersion', '1.0.0')

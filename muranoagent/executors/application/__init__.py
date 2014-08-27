@@ -17,23 +17,24 @@ import os
 import stat
 import subprocess
 import sys
+
+from muranoagent.openstack.common import log as logging
 from muranoagent.executors import executor
 import muranoagent.exceptions
 from bunch import Bunch
+
+LOG = logging.getLogger(__name__)
 
 
 @executor('Application')
 class ApplicationExecutor(object):
     def __init__(self, name):
-        self._capture_stdout = False
-        self._capture_stderr = False
-        self._verify_exitcode = True
         self._name = name
 
     def load(self, path, options):
         self._path = path
-        self._capture_stdout = options.get('captureStdout', False)
-        self._capture_stderr = options.get('captureStderr', False)
+        self._capture_stdout = options.get('captureStdout', True)
+        self._capture_stderr = options.get('captureStderr', True)
         self._verify_exitcode = options.get('verifyExitcode', True)
 
     def run(self, function, commandline='', input=None):
@@ -47,6 +48,8 @@ class ApplicationExecutor(object):
 
         stdout = subprocess.PIPE if self._capture_stdout else None
         stderr = subprocess.PIPE if self._capture_stderr else None
+        script_name = os.path.relpath(self._path)
+        LOG.debug("Starting '{0}' script execution".format(script_name))
 
         process = subprocess.Popen(
             app,
@@ -57,7 +60,14 @@ class ApplicationExecutor(object):
             shell=True)
         stdout, stderr = process.communicate(input)
         retcode = process.poll()
-
+        LOG.debug("Script {0} execution finished "
+                  "with retcode: '{1}'".format(script_name, str(retcode)))
+        if stdout:
+            LOG.debug("'{0}' execution stdout: "
+                      "'{1}'".format(script_name, stdout))
+        if stderr:
+            LOG.debug("'{0}' execution stderr: "
+                      "'{1}'".format(script_name, stderr))
         result = {
             'exitCode': retcode,
             'stdout': stdout.strip() if stdout else None,

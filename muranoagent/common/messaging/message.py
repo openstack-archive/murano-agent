@@ -34,9 +34,9 @@ class Message(object):
                 self.body = anyjson.loads(message_handle.body)
             else:
                 self.body = None
-        except ValueError as e:
+        except ValueError:
             self.body = None
-            LOG.exception(e)
+            LOG.exception('Message is not in JSON format')
 
     @property
     def body(self):

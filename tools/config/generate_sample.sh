@@ -75,7 +75,9 @@ then
     BASEDIR=$(cd "$BASEDIR" && pwd)
 fi
 
-PACKAGENAME=${PACKAGENAME:-$(python setup.py --name)}
+# Note: This change below is until the following bug is fixed:
+# https://bugs.launchpad.net/oslo-incubator/+bug/1367990
+PACKAGENAME=${PACKAGENAME:-${BASEDIR##*/}}
 TARGETDIR=$BASEDIR/$PACKAGENAME
 if ! [ -d $TARGETDIR ]
 then

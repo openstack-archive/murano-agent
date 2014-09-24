@@ -13,4 +13,4 @@
 
 import pbr.version
 
-version_info = pbr.version.VersionInfo('muranoagent')
+version_info = pbr.version.VersionInfo('murano-agent')

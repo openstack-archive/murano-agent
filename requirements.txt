@@ -1,5 +1,5 @@
 pbr>=0.6,!=0.7,<1.0
-semver
+semver!=2.0
 bunch
 oslo.config>=1.2.1
 iso8601

@@ -14,9 +14,10 @@
 #    under the License.
 
 """
-Routines for configuring Glance
+Routines for configuring Murano-Agent
 """
 
+import copy
 import logging
 import logging.config
 import logging.handlers
@@ -66,6 +67,10 @@ rabbit_opts = [
 ]
 
 CONF.register_opts(rabbit_opts, group='rabbitmq')
+
+
+def list_opts():
+    return [('rabbitmq', copy.deepcopy(rabbit_opts))]
 
 
 def parse_args(args=None, usage=None, default_config_files=None):

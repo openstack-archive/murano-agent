@@ -27,6 +27,7 @@ It also allows setting of formatting information through conf.
 
 """
 
+import copy
 import inspect
 import itertools
 import logging
@@ -182,6 +183,13 @@ CONF.register_opts(log_opts)
 #                module aware of it so it acts like other levels.
 logging.AUDIT = logging.INFO + 1
 logging.addLevelName(logging.AUDIT, 'AUDIT')
+
+
+def list_opts():
+    yield None, copy.deepcopy(common_cli_opts)
+    yield None, copy.deepcopy(logging_cli_opts)
+    yield None, copy.deepcopy(generic_log_opts)
+    yield None, copy.deepcopy(log_opts)
 
 
 try:

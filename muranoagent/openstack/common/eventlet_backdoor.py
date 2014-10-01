@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import errno
+import copy
 import gc
 import os
 import pprint
@@ -56,6 +57,9 @@ class EventletBackdoorConfigValueError(Exception):
                {'range': port_range, 'ex': ex, 'help': help_msg})
         super(EventletBackdoorConfigValueError, self).__init__(msg)
         self.port_range = port_range
+
+def list_opts():
+    return [(None, copy.deepcopy(eventlet_backdoor_opts))]
 
 
 def _dont_use_this():

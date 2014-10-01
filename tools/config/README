@@ -1,7 +1,0 @@
-To generate the sample config file from OpenStack project source trees,
-run the following command from the top level of murano-agent directory:
-
-  $> oslo-config-generator --config-file config-generator.conf
-
-Edit the file config-generator.conf, if you want for example change the
-output sample file of generation or change entry points

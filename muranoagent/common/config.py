@@ -17,7 +17,6 @@
 Routines for configuring Murano-Agent
 """
 
-import copy
 import logging
 import logging.config
 import logging.handlers
@@ -29,9 +28,12 @@ from oslo.config import cfg
 from muranoagent import version
 
 CONF = cfg.CONF
-CONF.register_cli_opt(cfg.StrOpt('storage',
-                                 default='/var/murano/plans',
-                                 help='Directory to store execution plans'))
+
+storage_opt = [
+    cfg.StrOpt('storage',
+               default='/var/murano/plans',
+               help='Directory to store execution plans')
+]
 
 rabbit_opts = [
     cfg.StrOpt('host',
@@ -66,11 +68,8 @@ rabbit_opts = [
 
 ]
 
+CONF.register_cli_opts(storage_opt)
 CONF.register_opts(rabbit_opts, group='rabbitmq')
-
-
-def list_opts():
-    return [('rabbitmq', copy.deepcopy(rabbit_opts))]
 
 
 def parse_args(args=None, usage=None, default_config_files=None):

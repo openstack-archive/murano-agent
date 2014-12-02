@@ -91,6 +91,7 @@ class MuranoAgent(service.Service):
                     result, plan)
                 self._queue.put_execution_result(execution_result, plan)
             except Exception as ex:
+                LOG.exception('Error running execution plan')
                 execution_result = ex_result.ExecutionResult.from_error(ex,
                                                                         plan)
                 self._queue.put_execution_result(execution_result, plan)

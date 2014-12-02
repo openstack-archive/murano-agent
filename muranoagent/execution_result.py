@@ -46,7 +46,7 @@ class ExecutionResult(object):
         if isinstance(error, int):
             error_code = error
         elif isinstance(error, Exception):
-            message = error.message
+            message = unicode(error)
             if isinstance(error, exc.AgentException):
                 error_code = error.error_code
                 additional_info = error.additional_data

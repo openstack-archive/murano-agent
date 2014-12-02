@@ -62,13 +62,15 @@ class ApplicationExecutor(object):
         stdout, stderr = process.communicate(input)
         retcode = process.poll()
         LOG.debug("Script {0} execution finished "
-                  "with retcode: '{1}'".format(script_name, str(retcode)))
-        if stdout:
-            LOG.debug("'{0}' execution stdout: "
-                      "'{1}'".format(script_name, stdout))
-        if stderr:
-            LOG.debug("'{0}' execution stderr: "
-                      "'{1}'".format(script_name, stderr))
+                  "with retcode: {1}".format(script_name, retcode))
+        if stdout is not None:
+            stdout = stdout.decode('utf-8')
+            LOG.debug(u"'{0}' execution stdout: "
+                      u"'{1}'".format(script_name, stdout))
+        if stderr is not None:
+            stderr = stderr.decode('utf-8')
+            LOG.debug(u"'{0}' execution stderr: "
+                      u"'{1}'".format(script_name, stderr))
         result = {
             'exitCode': retcode,
             'stdout': stdout.strip() if stdout else None,

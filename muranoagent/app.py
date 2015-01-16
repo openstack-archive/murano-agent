@@ -171,7 +171,7 @@ class MuranoAgent(service.Service):
                     plan_format_version, range_str))
 
         for attr in ('Scripts', 'Files', 'Options'):
-            if attr is plan and not isinstance(
+            if attr in plan and not isinstance(
                     plan[attr], types.DictionaryType):
                 return exc.AgentException(
                     2, '{0} is not a dictionary'.format(attr))

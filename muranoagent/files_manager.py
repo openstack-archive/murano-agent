@@ -23,12 +23,12 @@ CONF = config.CONF
 
 
 class FilesManager(object):
-    def __init__(self, execution_pan):
+    def __init__(self, execution_plan):
         self._fetched_files = {}
-        self._files = execution_pan.get('Files') or {}
+        self._files = execution_plan.get('Files') or {}
 
         self._cache_folder = os.path.join(
-            CONF.storage, 'files', execution_pan.ID)
+            CONF.storage, 'files', execution_plan.ID)
         if os.path.exists(self._cache_folder):
             self.clear()
         os.makedirs(self._cache_folder)

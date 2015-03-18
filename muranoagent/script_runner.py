@@ -29,13 +29,25 @@ class FunctionRunner(object):
 class ScriptRunner(object):
     def __init__(self, name, script_info, files_manager):
         self._name = name
-        self._executor = exe.Executors.create_executor(script_info.Type, name)
+        self._executor = self._get_executor(script_info['Type'], name,
+                                            script_info['EntryPoint'])
         self._script_info = script_info
         self._script_loaded = False
         self._files_manager = files_manager
 
     def __call__(self, *args, **kwargs):
         return self.execute_function(None, *args, **kwargs)
+
+    def _get_executor(self, script_type, script_name, entry_point):
+        create_executor = exe.Executors.create_executor
+        if script_type != 'Application':
+            executor = create_executor(script_type, entry_point)
+        else:
+            executor = create_executor(script_type, script_name)
+        if executor is None:
+            raise ValueError('The application type in {0} is not a valid '
+                             'executor {1}'.format(script_name, script_type))
+        return executor
 
     def execute_function(self, name, *args, **kwargs):
         self._load()
@@ -55,5 +67,8 @@ class ScriptRunner(object):
         for file_id in self._script_info.get('Files', []):
             self._files_manager.put_file(file_id, self._name)
 
-        return self._files_manager.put_file(
-            self._script_info["EntryPoint"], self._name)
+        if self._script_info["Type"] == 'Application':
+            return self._files_manager.put_file(
+                self._script_info["EntryPoint"], self._name)
+        else:
+            return self._files_manager._cache_folder

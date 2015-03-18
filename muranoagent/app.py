@@ -84,17 +84,17 @@ class MuranoAgent(service.Service):
         msg_iterator.next()
 
     def _run(self, plan):
-        with execution_plan_runner.ExecutionPlanRunner(plan) as runner:
-            try:
+        try:
+            with execution_plan_runner.ExecutionPlanRunner(plan) as runner:
                 result = runner.run()
                 execution_result = ex_result.ExecutionResult.from_result(
                     result, plan)
                 self._queue.put_execution_result(execution_result, plan)
-            except Exception as ex:
-                LOG.exception('Error running execution plan')
-                execution_result = ex_result.ExecutionResult.from_error(ex,
-                                                                        plan)
-                self._queue.put_execution_result(execution_result, plan)
+        except Exception as ex:
+            LOG.exception('Error running execution plan')
+            execution_result = ex_result.ExecutionResult.from_error(ex,
+                                                                    plan)
+            self._queue.put_execution_result(execution_result, plan)
 
     def _send_result(self, result):
         with self._create_rmq_client() as mq:
@@ -146,10 +146,10 @@ class MuranoAgent(service.Service):
         print(msg.body)
         if 'ID' not in msg.body and msg.id:
             msg.body['ID'] = msg.id
-        err = self._verify_plan(msg.body)
-        if err is None:
+        try:
+            self._verify_plan(msg.body)
             self._queue.put_execution_plan(msg.body)
-        else:
+        except Exception as err:
             try:
                 execution_result = ex_result.ExecutionResult.from_error(
                     err, bunch.Bunch(msg.body))
@@ -165,48 +165,63 @@ class MuranoAgent(service.Service):
             range_str = 'in range 2.0.0-{0}'.format(plan_format_version) \
                 if format_version != '2.0.0' \
                 else 'equal to {0}'.format(format_version)
-            return exc.AgentException(
+            raise exc.AgentException(
                 3,
                 'Unsupported format version {0} (must be {1})'.format(
                     plan_format_version, range_str))
 
+        for attr in ('Scripts', 'Files'):
+            if attr not in plan:
+                raise exc.AgentException(
+                    2, '{0} is not in the execution plan'.format(attr))
+
         for attr in ('Scripts', 'Files', 'Options'):
             if attr in plan and not isinstance(
                     plan[attr], types.DictionaryType):
-                return exc.AgentException(
+                raise exc.AgentException(
                     2, '{0} is not a dictionary'.format(attr))
 
         for name, script in plan.get('Scripts', {}).items():
             for attr in ('Type', 'EntryPoint'):
                 if attr not in script or not isinstance(
                         script[attr], types.StringTypes):
-                    return exc.AgentException(
+                    raise exc.AgentException(
                         2, 'Incorrect {0} entry in script {1}'.format(
                             attr, name))
             if not isinstance(script.get('Options', {}), types.DictionaryType):
-                return exc.AgentException(
+                raise exc.AgentException(
                     2, 'Incorrect Options entry in script {0}'.format(name))
 
-            if script['EntryPoint'] not in plan.get('Files', {}):
-                return exc.AgentException(
+            if (script['Type'] == 'Application' and
+                    script['EntryPoint'] not in plan.get('Files', {})):
+                raise exc.AgentException(
                     2, 'Script {0} misses entry point {1}'.format(
                         name, script['EntryPoint']))
 
             for additional_file in script.get('Files', []):
-                if additional_file not in plan.get('Files', {}):
-                    return exc.AgentException(
-                        2, 'Script {0} misses file {1}'.format(
-                            name, additional_file))
+                mns_error = ('Script {0} misses file {1}'.
+                             format(name, additional_file))
+                if isinstance(additional_file, dict):
+                    if (additional_file.keys()[0] not in
+                            plan.get('Files', {}).keys()):
+                        raise exc.AgentException(2, mns_error)
+                elif additional_file not in plan.get('Files', {}):
+                    raise exc.AgentException(2, mns_error)
 
         for key, plan_file in plan.get('Files', {}).items():
-            for attr in ('BodyType', 'Body', 'Name'):
-                if attr not in plan_file:
-                    return exc.AgentException(
-                        2, 'Incorrect {0} entry in file {1}'.format(
-                            attr, key))
+            if 'Type' in plan_file:
+                for attr in ('Type', 'URL', 'Name'):
+                    if attr not in plan_file:
+                        raise exc.AgentException(
+                            2, 'Incorrect {0} entry in file {1}'.format(
+                                attr, key))
+            else:
+                for attr in ('BodyType', 'Body', 'Name'):
+                    if attr not in plan_file:
+                        raise exc.AgentException(
+                            2, 'Incorrect {0} entry in file {1}'.format(
+                                attr, key))
 
-            if plan_file['BodyType'] not in ('Text', 'Base64'):
-                return exc.AgentException(
-                    2, 'Incorrect BodyType in file {1}'.format(key))
-
-        return None
+                if plan_file['BodyType'] not in ('Text', 'Base64'):
+                    raise exc.AgentException(
+                        2, 'Incorrect BodyType in file {1}'.format(key))

@@ -40,7 +40,7 @@ class TestFileManager(base.MuranoAgentTestCase):
         """It gets the folder where the URL is a git URL."""
         mock_path.return_value = None
         files = files_manager.FilesManager(self.get_template_downloable())
-        folder = files._get_file_folder("http://tomcat.git")
+        folder = files._get_file_folder("http://tomcat.git", "tomcat")
         self.assertEqual(folder, "cache/files/ID/files/tomcat")
 
     @mock.patch('os.makedirs')
@@ -48,7 +48,7 @@ class TestFileManager(base.MuranoAgentTestCase):
         """It gets the folder from the URL."""
         mock_path.return_value = None
         files = files_manager.FilesManager(self.get_template_downloable())
-        folder = files._get_file_folder("http://tomcat")
+        folder = files._get_file_folder("http://tomcat", "tomcat")
         self.assertEqual(folder, "cache/files/ID/files/tomcat")
 
     @mock.patch("git.Git")

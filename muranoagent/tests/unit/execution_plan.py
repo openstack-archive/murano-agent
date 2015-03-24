@@ -144,3 +144,48 @@ class ExPlanDownloableNoFiles(fixtures.Fixture):
             }
         )
         self.addCleanup(delattr, self, 'execution_plan')
+
+
+class PuppetExPlanDownloable(fixtures.Fixture):
+    def setUp(self):
+        super(PuppetExPlanDownloable, self).setUp()
+        self.execution_plan = bunch.Bunch(
+            Action='Execute',
+            Body='return deploy(args.appName).stdout\n',
+            Files={
+                'ID1': {
+                    'Name': 'tomcat.git',
+                    'Type': 'Downloadable',
+                    'URL': 'https://github.com/tomcat.git'
+                },
+                'ID2': {
+                    'Name': 'java',
+                    'Type': 'Downloadable',
+                    'URL': 'https://github.com/java.git'
+                },
+
+            },
+            FormatVersion='2.0.0',
+            ID='ID',
+            Name='Deploy Puppet',
+            Parameters={
+                'appName': '$appName'
+            },
+            Scripts={
+                'deploy': {
+                    'EntryPoint': 'cookbook::recipe',
+                    'Files': [
+                        'ID1',
+                        'ID2'
+                    ],
+                    'Options': {
+                        'captureStderr': True,
+                        'captureStdout': True
+                    },
+                    'Type': 'Puppet',
+                    'Version': '1.0.0'
+                }
+            },
+            Version='1.0.0'
+        )
+        self.addCleanup(delattr, self, 'execution_plan')

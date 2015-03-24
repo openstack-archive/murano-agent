@@ -101,7 +101,7 @@ class FilesManager(object):
         if not os.path.isdir(os.path.join(self._cache_folder, 'files')):
             os.makedirs(os.path.join(self._cache_folder, 'files'))
 
-        folder = self._get_file_folder(url_file)
+        folder = self._get_file_folder(url_file, file_def['Name'])
 
         if self._is_git_repository(url_file):
             if not os.path.isdir(folder):
@@ -127,16 +127,20 @@ class FilesManager(object):
         return (urlparse.urlsplit(file).scheme or
                 urlparse.urlsplit(file).netloc)
 
-    def _get_file_folder(self, file_url):
-        if file_url.endswith('.git'):
-            file_folder = file_url[file_url.rfind('/') + 1:
-                                   file_url.find('.git')]
-        else:
-            file_folder = file_url[file_url.rfind('/') + 1:]
+    def _get_file_folder(self, file_url, folder_name):
+        if folder_name is None:
+            if file_url.endswith('.git'):
+                file_folder = file_url[file_url.rfind('/') +
+                                       1: file_url.find('.git')]
+            else:
+                file_folder = file_url[file_url.rfind('/') + 1:]
 
-        folder = os.path.join(self._cache_folder, 'files', file_folder)
+            folder = os.path.join(self._cache_folder, 'files', file_folder)
+        else:
+            folder = os.path.join(self._cache_folder, 'files', folder_name)
         return folder
 
     def _is_git_repository(self, url):
-        return url.startswith(("git://",
+        return (url.startswith(("git://",
                                "git+http://", "git+https:/"))
+                or url.endswith('.git'))

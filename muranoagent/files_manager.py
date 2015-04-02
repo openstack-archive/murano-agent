@@ -57,10 +57,11 @@ class FilesManager(object):
         script_folder = os.path.join(self._cache_folder, script)
         if not os.path.isdir(script_folder):
             os.mkdir(script_folder)
-            file_folder = os.path.join(script_folder,
-                                       os.path.dirname(file_name))
-            if not os.path.isdir(file_folder):
-                os.makedirs(file_folder)
+
+        file_folder = os.path.join(script_folder,
+                                   os.path.dirname(file_name))
+        if not os.path.isdir(file_folder):
+            os.makedirs(file_folder)
 
         if cache_path is not None:
             script_path = os.path.join(script_folder, file_name)

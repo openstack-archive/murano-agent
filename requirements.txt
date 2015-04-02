@@ -14,4 +14,5 @@ stevedore>=1.0.0  # Apache-2.0
 # not listed in global requirements
 semver!=2.0
 bunch
+gitpython
 requests

@@ -43,8 +43,8 @@ class FilesManager(object):
             file_name = file_id.keys()[0]
             file_def = file_id[file_name]
         else:
-            file_name = file_id
-            file_def = self._files[file_name]
+            file_def = self._files[file_id]
+            file_name = file_def['Name']
 
         if file_def.get('Type') == 'Downloadable':
             self._download_url_file(file_def)
@@ -63,10 +63,10 @@ class FilesManager(object):
                 os.makedirs(file_folder)
 
         if cache_path is not None:
-            script_path = os.path.join(os.getcwd(), script_folder, file_name)
+            script_path = os.path.join(script_folder, file_name)
             if not os.path.lexists(script_path):
                 os.symlink(cache_path, script_path)
-        return script_path
+            return script_path
 
     def _fetch_file(self, file_id):
         if file_id in self._fetched_files:

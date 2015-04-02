@@ -9,10 +9,16 @@ svc_root=${DIB_MURANO_AGENT_SVC_ROOT:-/opt/stack/$name}
 install_dir=${DIB_MURANO_AGENT_INSTALL_DIR:-/opt/stack/venvs/$name}
 repo=${DIB_MURANO_AGENT_REPO:-git://git.openstack.org/stackforge/murano-agent.git}
 branch=${DIB_MURANO_AGENT_BRANCH:-master}
+ref=${DIB_MURANO_AGENT_REF:-''}
 
 # clone murano-agent source code into /opt/stack/murano-agent
 mkdir -p $svc_root
 git clone --depth=1 -b $branch $repo $svc_root
+if [ -n "$ref" ]; then
+    pushd $svc_root
+    git fetch $repo $ref && git checkout FETCH_HEAD
+    popd
+fi
 
 # install murano-agent into virtualenv at /ops/stack/venvs/murano-agent
 virtualenv $install_dir

@@ -19,7 +19,7 @@ import time
 import types
 
 import bunch
-import semver
+import semantic_version
 
 from muranoagent.common import config
 from muranoagent.common import messaging
@@ -33,7 +33,7 @@ from muranoagent.openstack.common import service
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
-format_version = '2.0.0'
+max_format_version = semantic_version.Spec('<=2.1.0')
 
 
 class MuranoAgent(service.Service):
@@ -143,7 +143,6 @@ class MuranoAgent(service.Service):
                 delay = min(delay * 1.2, 60)
 
     def _handle_message(self, msg):
-        print(msg.body)
         if 'ID' not in msg.body and msg.id:
             msg.body['ID'] = msg.id
         try:
@@ -159,69 +158,105 @@ class MuranoAgent(service.Service):
                 LOG.warn('Execution result is not produced')
 
     def _verify_plan(self, plan):
-        plan_format_version = plan.get('FormatVersion', '1.0.0')
-        if semver.compare(plan_format_version, '2.0.0') > 0 or \
-                semver.compare(plan_format_version, format_version) < 0:
-            range_str = 'in range 2.0.0-{0}'.format(plan_format_version) \
-                if format_version != '2.0.0' \
-                else 'equal to {0}'.format(format_version)
-            raise exc.AgentException(
-                3,
-                'Unsupported format version {0} (must be {1})'.format(
-                    plan_format_version, range_str))
+        plan_format_version = semantic_version.Version(
+            plan.get('FormatVersion', '1.0.0'))
+
+        if plan_format_version not in max_format_version:
+            # NOTE(kazitsev) this is Version in Spec not str in str
+            raise exc.IncorrectFormat(
+                9,
+                "Unsupported format version {0} "
+                "(I support versions {1})".format(
+                    plan_format_version, max_format_version))
 
         for attr in ('Scripts', 'Files'):
             if attr not in plan:
-                raise exc.AgentException(
+                raise exc.IncorrectFormat(
                     2, '{0} is not in the execution plan'.format(attr))
 
         for attr in ('Scripts', 'Files', 'Options'):
             if attr in plan and not isinstance(
                     plan[attr], types.DictionaryType):
-                raise exc.AgentException(
+                raise exc.IncorrectFormat(
                     2, '{0} is not a dictionary'.format(attr))
 
         for name, script in plan.get('Scripts', {}).items():
-            for attr in ('Type', 'EntryPoint'):
-                if attr not in script or not isinstance(
-                        script[attr], types.StringTypes):
-                    raise exc.AgentException(
-                        2, 'Incorrect {0} entry in script {1}'.format(
-                            attr, name))
-            if not isinstance(script.get('Options', {}), types.DictionaryType):
-                raise exc.AgentException(
-                    2, 'Incorrect Options entry in script {0}'.format(name))
+            self._validate_script(name, script, plan_format_version, plan)
 
-            if (script['Type'] == 'Application' and
-                    script['EntryPoint'] not in plan.get('Files', {})):
-                raise exc.AgentException(
+        for key, plan_file in plan.get('Files', {}).items():
+            self._validate_file(plan_file, key, plan_format_version)
+
+    def _validate_script(self, name, script, plan_format_version, plan):
+        for attr in ('Type', 'EntryPoint'):
+            if attr not in script or not isinstance(script[attr],
+                                                    types.StringTypes):
+                raise exc.IncorrectFormat(
+                    2, 'Incorrect {0} entry in script {1}'.format(
+                        attr, name))
+
+        if plan_format_version in semantic_version.Spec('>=2.0.0,<2.1.0'):
+            if script['Type'] != 'Application':
+                raise exc.IncorrectFormat(
+                    2, 'Type {0} is not valid for format {1}'.format(
+                        script['Type'], plan_format_version))
+            if script['EntryPoint'] not in plan.get('Files', {}):
+                raise exc.IncorrectFormat(
                     2, 'Script {0} misses entry point {1}'.format(
                         name, script['EntryPoint']))
 
-            for additional_file in script.get('Files', []):
+        if plan_format_version in semantic_version.Spec('==2.1.0'):
+            if script['Type'] not in ('Application', 'Chef', 'Puppet'):
+                raise exc.IncorrectFormat(
+                    2, 'Script has not a valid type {0}'.format(
+                        script['Type']))
+            if (script['Type'] == 'Application' and script['EntryPoint']
+               not in plan.get('Files', {})):
+                    raise exc.IncorrectFormat(
+                        2, 'Script {0} misses entry point {1}'.format(
+                            name, script['EntryPoint']))
+            elif (script['Type'] != 'Application' and
+                  "::" not in script['EntryPoint']):
+                    raise exc.IncorrectFormat(
+                        2, 'Wrong EntryPoint {0} for Puppet/Chef '
+                           'executors. :: needed'.format(name,
+                                                         script['EntryPoint']))
+
+        for additional_file in script.get('Files', []):
                 mns_error = ('Script {0} misses file {1}'.
                              format(name, additional_file))
                 if isinstance(additional_file, dict):
                     if (additional_file.keys()[0] not in
                             plan.get('Files', {}).keys()):
-                        raise exc.AgentException(2, mns_error)
+                        raise exc.IncorrectFormat(2, mns_error)
                 elif additional_file not in plan.get('Files', {}):
-                    raise exc.AgentException(2, mns_error)
+                    raise exc.IncorrectFormat(2, mns_error)
 
-        for key, plan_file in plan.get('Files', {}).items():
-            if 'Type' in plan_file:
-                for attr in ('Type', 'URL', 'Name'):
-                    if attr not in plan_file:
-                        raise exc.AgentException(
-                            2, 'Incorrect {0} entry in file {1}'.format(
-                                attr, key))
-            else:
-                for attr in ('BodyType', 'Body', 'Name'):
-                    if attr not in plan_file:
-                        raise exc.AgentException(
-                            2, 'Incorrect {0} entry in file {1}'.format(
-                                attr, key))
+    def _validate_file(self, plan_file, key, format_version):
+        if format_version in semantic_version.Spec('>=2.0.0,<2.1.0'):
+            for plan in plan_file.keys():
+                if plan in ('Type', 'URL'):
+                    raise exc.IncorrectFormat(
+                        2, 'Download file is {0} not valid for this '
+                           'version {1}'.format(key, format_version))
 
-                if plan_file['BodyType'] not in ('Text', 'Base64'):
-                    raise exc.AgentException(
+        if 'Type' in plan_file:
+            for attr in ('Type', 'URL', 'Name'):
+                if attr not in plan_file:
+                    raise exc.IncorrectFormat(
+                        2,
+                        'Incorrect {0} entry in file {1}'.format(attr, key))
+
+        elif 'Body' in plan_file:
+            for attr in ('BodyType', 'Body', 'Name'):
+                if attr not in plan_file:
+                    raise exc.IncorrectFormat(
+                        2, 'Incorrect {0} entry in file {1}'.format(
+                            attr, key))
+
+            if plan_file['BodyType'] not in ('Text', 'Base64'):
+                    raise exc.IncorrectFormat(
                         2, 'Incorrect BodyType in file {1}'.format(key))
+        else:
+            raise exc.IncorrectFormat(
+                2, 'Invalid file {0}: {1}'.format(
+                    key, plan_file))

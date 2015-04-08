@@ -107,7 +107,7 @@ class TestFileManager(base.MuranoAgentTestCase):
     @mock.patch("git.Git")
     @mock.patch('os.path.isdir')
     @mock.patch('os.makedirs')
-    def test_putfile_downloable(self, mock_makedir, mock_git, path):
+    def test_putfile_downloable(self, mock_makedir, path, mock_git):
         """It tests the putfile method when the file is a git
         URL.
         """

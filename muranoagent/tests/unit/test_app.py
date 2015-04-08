@@ -43,14 +43,31 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
             ID='ID',
             FormatVersion='0.0.0',
         )
-        self.assertRaises(exc.AgentException,
+        self.assertRaises(exc.IncorrectFormat,
+                          self.agent._verify_plan, template)
+
+    def test_verify_over_max_execution_plan(self):
+        template = self.useFixture(ep.ExPlanApplication()).execution_plan
+        template['FormatVersion'] = '1000.0.0'
+        self.assertRaises(exc.IncorrectFormat,
                           self.agent._verify_plan, template)
 
     def test_verify_execution_application(self):
         template = self.useFixture(ep.ExPlanApplication()).execution_plan
         self.agent._verify_plan(template)
 
+    def test_verify_wrong_execution_application(self):
+        template = self.useFixture(ep.ExPlanApplication()).execution_plan
+        template['Files']['ID1'] = {
+            'Name': 'tomcat.git',
+            'Type': 'Downloadable',
+            'URL': 'https://github.com/tomcat.git'
+        }
+        template['FormatVersion'] = '2.0.0'
+        self.assertRaises(exc.IncorrectFormat,
+                          self.agent._verify_plan, template)
+
     def test_verify_execution_plan_no_files(self):
         template = self.useFixture(ep.ExPlanDownloableNoFiles()).execution_plan
-        self.assertRaises(exc.AgentException,
+        self.assertRaises(exc.IncorrectFormat,
                           self.agent._verify_plan, template)

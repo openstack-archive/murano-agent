@@ -20,6 +20,7 @@ import subprocess
 
 import muranoagent.exceptions
 from muranoagent import executors
+from muranoagent.executors import chef_puppet_executor_base
 from muranoagent.openstack.common import log as logging
 
 
@@ -27,21 +28,7 @@ LOG = logging.getLogger(__name__)
 
 
 @executors.executor('Chef')
-class ChefExecutor(object):
-    def __init__(self, name):
-        self._name = name
-
-    def load(self, path, options):
-        """It loads the path and options from template into
-        the chef executor.
-
-           :param path: The path
-           :param options: execution plan options.
-        """
-        self._path = path
-        self._capture_stdout = options.get('captureStdout', True)
-        self._capture_stderr = options.get('captureStderr', True)
-        self._verify_exitcode = options.get('verifyExitcode', True)
+class ChefExecutor(chef_puppet_executor_base.ChefPuppetExecutorBase):
 
     def run(self, function, recipe_attributes=None, input=None):
         """It runs the chef executor.
@@ -50,22 +37,12 @@ class ChefExecutor(object):
            :param recipe_attributes: recipe attributes
            :param input:
         """
-        if not self._valid_name(self._name):
-            msg = ("Cookbook recipe name format {0} is not valid".
-                   format(self._name))
-            LOG.debug(msg)
-            raise muranoagent.exceptions.CustomException(
-                0,
-                message=msg,
-                additional_data=None)
-
-        self.cookbook_name = self._name[0:self._name.rfind('::')]
-        self.cookbook_recipe = self._name[self._name.rfind('::') + 2:]
+        self._valid_module_name()
 
         try:
             self._configure_chef()
-            self._generate_manifest(self.cookbook_name,
-                                    self.cookbook_recipe, recipe_attributes)
+            self._generate_manifest(self.module_name,
+                                    self.module_recipe, recipe_attributes)
         except Exception as e:
             result = {
                 'exitCode': 2,
@@ -75,50 +52,13 @@ class ChefExecutor(object):
             raise muranoagent.exceptions.CustomException(
                 0,
                 message='Cookbook {0} returned error code {1}: {2}'.format(
-                    self.cookbook_name, self.cookbook_recipe, e.strerror,
+                    self.module_name, self.module_recipe, e.strerror,
                 ), additional_data=result)
 
-        stdout = subprocess.PIPE if self._capture_stdout else None
-        stderr = subprocess.PIPE if self._capture_stderr else None
         solo_file = os.path.join(self._path, "files", "solo.rb")
-        process = subprocess.Popen(
-            'chef-solo -j node.json -c ' + solo_file,
-            stdout=stdout,
-            stderr=stderr,
-            universal_newlines=True,
-            cwd=os.getcwd(),
-            shell=True)
-        stdout, stderr = process.communicate(input)
-        retcode = process.poll()
-
-        if stdout is not None:
-            stdout = stdout.decode('utf-8')
-            LOG.debug(u"'{0}' execution stdout: "
-                      u"'{1}'".format(self.cookbook_name, stdout))
-        if stderr is not None:
-            for line in stdout.splitlines():
-                if 'ERROR' in line:
-                    stderr += line + "\n"
-            LOG.debug(u"'{0}' execution stderr: "
-                      u"'{1}'".format(self.cookbook_name, stderr))
-
-        LOG.debug('Script {0} execution finished \
-            with retcode: {1} {2}'.format(self.cookbook_name, retcode, stderr))
-        result = {
-            'exitCode': retcode,
-            'stdout': stdout.strip() if stdout else None,
-            'stderr': stderr.strip() if stderr else None,
-        }
-        if self._verify_exitcode and retcode:
-            raise muranoagent.exceptions.CustomException(
-                0,
-                message='Script {0} returned error code'.format(self._name),
-                additional_data=result)
-
+        command = 'chef-solo -j node.json -c {0}'.format(solo_file)
+        result = self._execute_command(command)
         return bunch.Bunch(result)
-
-    def _valid_name(self, name):
-        return '::' in self._name
 
     def _configure_chef(self):
         """It generates the chef files for configuration."""

@@ -48,17 +48,11 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
 
     @mock.patch('subprocess.Popen')
     @mock.patch('__builtin__.open')
-    def test_cookbook(self, open_mock, mock_subproc_popen,):
+    @mock.patch('os.path.exists')
+    def test_cookbook(self, mock_exist, open_mock, mock_subproc_popen):
         """It tests chef executor."""
-        context_manager_mock = mock.Mock()
-        open_mock.return_value = context_manager_mock
-        file_mock = mock.Mock()
-        file_mock.read.return_value = ''
-        enter_mock = mock.Mock()
-        enter_mock.return_value = file_mock
-        exit_mock = mock.Mock()
-        setattr(context_manager_mock, '__enter__', enter_mock)
-        setattr(context_manager_mock, '__exit__', exit_mock)
+        self._open_mock(open_mock)
+        mock_exist.return_value = True
 
         process_mock = mock.Mock()
         attrs = {'communicate.return_value': ('ouput', 'ok'),
@@ -73,17 +67,11 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
 
     @mock.patch('subprocess.Popen')
     @mock.patch('__builtin__.open')
-    def test_cookbook_error(self, open_mock, mock_subproc_popen):
+    @mock.patch('os.path.exists')
+    def test_cookbook_error(self, mock_exist, open_mock, mock_subproc_popen):
         """It tests chef executor with error in the request."""
-        context_manager_mock = mock.Mock()
-        open_mock.return_value = context_manager_mock
-        file_mock = mock.Mock()
-        file_mock.read.return_value = ''
-        enter_mock = mock.Mock()
-        enter_mock.return_value = file_mock
-        exit_mock = mock.Mock()
-        setattr(context_manager_mock, '__enter__', enter_mock)
-        setattr(context_manager_mock, '__exit__', exit_mock)
+        self._open_mock(open_mock)
+        mock_exist.return_value = True
 
         process_mock = mock.Mock()
         attrs = {'communicate.return_value': ('ouput', 'error'),
@@ -102,6 +90,17 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         chef_executor = chef.ChefExecutor('wrong')
         self.assertRaises(ex.CustomException, chef_executor.run,
                           'test')
+
+    def _open_mock(self, open_mock):
+        context_manager_mock = mock.Mock()
+        open_mock.return_value = context_manager_mock
+        file_mock = mock.Mock()
+        file_mock.read.return_value = ''
+        enter_mock = mock.Mock()
+        enter_mock.return_value = file_mock
+        exit_mock = mock.Mock()
+        setattr(context_manager_mock, '__enter__', enter_mock)
+        setattr(context_manager_mock, '__exit__', exit_mock)
 
     def _stub_uuid(self, values=[]):
         class FakeUUID(object):

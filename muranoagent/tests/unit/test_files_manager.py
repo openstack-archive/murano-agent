@@ -13,8 +13,8 @@
 #    under the License.
 
 import bunch
-import git
 import mock
+import os.path
 
 from muranoagent.common import config as cfg
 from muranoagent import files_manager
@@ -41,7 +41,8 @@ class TestFileManager(base.MuranoAgentTestCase):
         mock_path.return_value = None
         files = files_manager.FilesManager(self.get_template_downloable())
         folder = files._get_file_folder("http://tomcat.git", "tomcat")
-        self.assertEqual(folder, "cache/files/ID/files/tomcat")
+        self.assertEqual(folder,
+                         os.path.normpath("cache/files/ID/files/tomcat"))
 
     @mock.patch('os.makedirs')
     def test_get_folder_not_git(self, mock_path):
@@ -49,7 +50,8 @@ class TestFileManager(base.MuranoAgentTestCase):
         mock_path.return_value = None
         files = files_manager.FilesManager(self.get_template_downloable())
         folder = files._get_file_folder("http://tomcat", "tomcat")
-        self.assertEqual(folder, "cache/files/ID/files/tomcat")
+        self.assertEqual(folder,
+                         os.path.normpath("cache/files/ID/files/tomcat"))
 
     @mock.patch("git.Git")
     @mock.patch('os.path.isdir')
@@ -107,7 +109,7 @@ class TestFileManager(base.MuranoAgentTestCase):
     @mock.patch("git.Git")
     @mock.patch('os.path.isdir')
     @mock.patch('os.makedirs')
-    def test_putfile_downloable(self, mock_makedir, mock_git, path):
+    def test_putfile_downloable(self, mock_makedir, path, mock_git):
         """It tests the putfile method when the file is a git
         URL.
         """

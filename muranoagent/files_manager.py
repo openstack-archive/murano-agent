@@ -18,13 +18,13 @@ import git
 import os
 import requests
 import shutil
-import subprocess
 import urlparse
 
 from muranoagent.common import config
-
+from muranoagent.openstack.common import log as logging
 
 CONF = config.CONF
+LOG = logging.getLogger(__name__)
 
 
 class FilesManager(object):
@@ -104,11 +104,23 @@ class FilesManager(object):
 
         folder = self._get_file_folder(url_file, file_def['Name'])
 
-        if self._is_git_repository(url_file):
-            if not os.path.isdir(folder):
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+
+        try:
+            if self._is_git_repository(url_file):
                 git.Git().clone(url_file, folder)
-        else:
-            self._download_file(url_file, folder)
+            else:
+                self._download_file(url_file, folder)
+        except Exception as e:
+            if self._is_git_repository(url_file):
+                mns = ("Error to clone the git repository {0}: {1}".
+                       format(url_file, e.message))
+            else:
+                mns = ("Error to download the file {0}: {1}".
+                       format(url_file, e.message))
+            LOG.warn(mns)
+            raise ValueError(mns)
 
     def clear(self):
         shutil.rmtree(self._cache_folder, ignore_errors=True)

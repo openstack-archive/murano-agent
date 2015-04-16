@@ -101,8 +101,11 @@ class MuranoAgent(service.Service):
             msg = messaging.Message()
             msg.body = result
             msg.id = result.get('SourceID')
+            routing_key = CONF.rabbitmq.result_routing_key
+            if ('ReplyTo' in result) and CONF.enable_dynamic_result_queue:
+                    routing_key = result.pop('ReplyTo')
             mq.send(message=msg,
-                    key=CONF.rabbitmq.result_routing_key,
+                    key=routing_key,
                     exchange=CONF.rabbitmq.result_exchange)
         return True
 
@@ -145,6 +148,8 @@ class MuranoAgent(service.Service):
     def _handle_message(self, msg):
         if 'ID' not in msg.body and msg.id:
             msg.body['ID'] = msg.id
+        if 'ReplyTo' not in msg.body and msg.reply_to:
+            msg.body['ReplyTo'] = msg.reply_to
         try:
             self._verify_plan(msg.body)
             self._queue.put_execution_plan(msg.body)
@@ -152,6 +157,9 @@ class MuranoAgent(service.Service):
             try:
                 execution_result = ex_result.ExecutionResult.from_error(
                     err, bunch.Bunch(msg.body))
+                if ('ReplyTo' in msg.body) and \
+                        CONF.enable_dynamic_result_queue:
+                    execution_result['ReplyTo'] = msg.body.get('ReplyTo')
 
                 self._send_result(execution_result)
             except ValueError:

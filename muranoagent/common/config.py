@@ -30,6 +30,12 @@ storage_opt = [
                help='Directory to store execution plans')
 ]
 
+message_routing_opt = [
+    cfg.BoolOpt('enable_dynamic_result_queue', help='Enable taking dynamic '
+                'result queue from task field reply_to',
+                default=False)
+]
+
 rabbit_opts = [
     cfg.StrOpt('host',
                help='The RabbitMQ broker address which used for communication '
@@ -64,6 +70,7 @@ rabbit_opts = [
 ]
 
 CONF.register_cli_opts(storage_opt)
+CONF.register_cli_opts(message_routing_opt)
 CONF.register_opts(rabbit_opts, group='rabbitmq')
 logging.register_options(CONF)
 

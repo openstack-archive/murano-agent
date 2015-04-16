@@ -26,8 +26,10 @@ class Message(object):
         self._message_handle = message_handle
         if message_handle:
             self.id = message_handle.properties.get('message_id')
+            self._reply_to = message_handle.properties.get('reply_to')
         else:
             self.id = None
+            self._reply_to = None
 
         try:
             if message_handle:
@@ -53,6 +55,10 @@ class Message(object):
     @id.setter
     def id(self, value):
         self._id = value or ''
+
+    @property
+    def reply_to(self):
+        return self._reply_to
 
     def ack(self):
         self._message_handle.ack()

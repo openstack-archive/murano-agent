@@ -7,7 +7,7 @@ install-packages git-core wget make gcc python-pip python-dev python-setuptools 
 name=murano-agent
 svc_root=${DIB_MURANO_AGENT_SVC_ROOT:-/opt/stack/$name}
 install_dir=${DIB_MURANO_AGENT_INSTALL_DIR:-/opt/stack/venvs/$name}
-repo=${DIB_MURANO_AGENT_REPO:-git://git.openstack.org/stackforge/murano-agent.git}
+repo=${DIB_MURANO_AGENT_REPO:-git://git.openstack.org/openstack/murano-agent.git}
 branch=${DIB_MURANO_AGENT_BRANCH:-master}
 ref=${DIB_MURANO_AGENT_REF:-''}
 

@@ -36,7 +36,7 @@ class ExPlanDownloable(fixtures.Fixture):
                 },
 
             },
-            FormatVersion='2.0.0',
+            FormatVersion='2.1.0',
             ID='ID',
             Name='Deploy Chef',
             Parameters={
@@ -44,7 +44,7 @@ class ExPlanDownloable(fixtures.Fixture):
             },
             Scripts={
                 'deploy': {
-                    'EntryPoint': 'cookbook/recipe',
+                    'EntryPoint': 'cookbook::recipe',
                     'Files': [
                         'ID1',
                         'ID2'
@@ -85,7 +85,7 @@ class ExPlanApplication(fixtures.Fixture):
                     'Name': 'common.sh'
                 }
             },
-            FormatVersion='2.0.0',
+            FormatVersion='2.1.0',
             ID='ID',
             Name='Deploy Tomcat',
             Parameters={
@@ -126,10 +126,10 @@ class ExPlanDownloableNoFiles(fixtures.Fixture):
         super(ExPlanDownloableNoFiles, self).setUp()
         self.execution_plan = bunch.Bunch(
             ID='ID',
-            FormatVersion='2.0.0',
+            FormatVersion='2.1.0',
             Scripts={
                 'deploy': {
-                    'EntryPoint': 'cookbook/recipe',
+                    'EntryPoint': 'cookbook::recipe',
                     'Files': [
                         'https://github.com/tomcat.git',
                         {'java': 'https://github.com/java.git'}

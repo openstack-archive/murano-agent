@@ -33,3 +33,7 @@ class CustomException(AgentException):
     def __init__(self, code, message=None, additional_data=None):
         super(CustomException, self).__init__(
             code + 100, message, additional_data)
+
+
+class IncorrectFormat(AgentException):
+    pass

@@ -19,7 +19,9 @@ Project Hosting Details
 =======================
 
 * Bug tracker
-    https://launchpad.net/murano
+    * https://launchpad.net/murano
+
+    * https://launchpad.net/python-muranoclient
 
 * Mailing list (prefix subjects with ``[Murano]`` for faster responses)
     http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev

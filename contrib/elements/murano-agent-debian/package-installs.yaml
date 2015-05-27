@@ -1,0 +1,14 @@
+inetutils-ping:
+net-tools:
+vim:
+isc-dhcp-client:
+git-core:
+wget:
+make:
+gcc:
+python-pip:
+python-dev:
+python-setuptools:
+python-virtualenv:
+iptables:
+virtualenvwrapper:

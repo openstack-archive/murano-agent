@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+# Fix problem with default hostname
+rm -rf /etc/cloud/cloud.cfg.d/01_hostname.cfg
+
+# Fix problem with locale generation
+sed -e '/# en_US.UTF-8/ s/^# //' -i /etc/locale.gen
+locale-gen

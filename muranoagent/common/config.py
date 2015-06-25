@@ -82,8 +82,8 @@ def parse_args(args=None, usage=None, default_config_files=None):
 
 
 def setup_logging():
-    """
-    Sets up the logging options for a log with supplied name
+    """Sets up the logging options for a log with supplied name
+
     """
 
     if CONF.log_config:

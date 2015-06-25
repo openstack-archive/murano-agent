@@ -36,7 +36,7 @@ class ExecutionPlanQueue(object):
 
     def put_execution_plan(self, execution_plan):
         timestamp = str(int(time.time() * 10000))
-        #execution_plan['_timestamp'] = timestamp
+        # execution_plan['_timestamp'] = timestamp
         folder_path = os.path.join(self._plans_folder, timestamp)
         os.mkdir(folder_path)
         file_path = os.path.join(

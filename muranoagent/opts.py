@@ -17,7 +17,6 @@ import copy
 import itertools
 
 import muranoagent.common.config
-import muranoagent.openstack.common.eventlet_backdoor
 import muranoagent.openstack.common.log
 
 
@@ -31,7 +30,6 @@ _opt_lists = [
     ('rabbitmq', muranoagent.common.config.rabbit_opts),
     (None, build_list([
         muranoagent.common.config.storage_opt,
-        muranoagent.openstack.common.eventlet_backdoor.eventlet_backdoor_opts,
         muranoagent.openstack.common.log.common_cli_opts,
         muranoagent.openstack.common.log.generic_log_opts,
         muranoagent.openstack.common.log.log_opts,

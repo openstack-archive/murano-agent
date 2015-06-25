@@ -19,6 +19,7 @@ import time
 import types
 
 import bunch
+from oslo_service import service
 import semantic_version
 
 from muranoagent.common import config
@@ -28,7 +29,6 @@ from muranoagent import execution_plan_queue
 from muranoagent import execution_plan_runner
 from muranoagent import execution_result as ex_result
 from muranoagent.openstack.common import log as logging
-from muranoagent.openstack.common import service
 
 CONF = config.CONF
 

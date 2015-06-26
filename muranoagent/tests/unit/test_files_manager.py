@@ -58,8 +58,8 @@ class TestFileManager(base.MuranoAgentTestCase):
     @mock.patch('os.makedirs')
     def test_execution_plan_type_downloable_git(self, mock_makedir, mock_path,
                                                 mock_git):
-        """It tests an execution plan when there are files
-        which should be downloable.
+        """Test an execution plan with downloadable git files
+
         """
         mock_makedir.return_value = None
         mock_path.return_value = True
@@ -76,8 +76,8 @@ class TestFileManager(base.MuranoAgentTestCase):
     def test_execution_plan_type_downloable(self, mock_requests, open_mock,
                                             mock_makedir,
                                             mock_mkdir, mock_path):
-        """It tests an execution plan when there are files
-        which should be downloable.
+        """Test an execution plan with downloadable files
+
         """
         mock_path.return_value = True
         mock_mkdir.return_value = None
@@ -110,8 +110,8 @@ class TestFileManager(base.MuranoAgentTestCase):
     @mock.patch('os.path.isdir')
     @mock.patch('os.makedirs')
     def test_putfile_downloable(self, mock_makedir, path, mock_git):
-        """It tests the putfile method when the file is a git
-        URL.
+        """It tests the putfile method when the file is a git URL.
+
         """
         path.return_value = True
         mock_git.clone.return_value = None

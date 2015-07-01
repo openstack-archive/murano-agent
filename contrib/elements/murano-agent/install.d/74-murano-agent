@@ -2,7 +2,7 @@
 
 set -eu
 
-install-packages git-core wget make gcc python-pip python-dev python-setuptools python-virtualenv
+install-packages git-core wget make gcc python-pip python-dev python-setuptools python-virtualenv chef puppet
 
 name=murano-agent
 svc_root=${DIB_MURANO_AGENT_SVC_ROOT:-/opt/stack/$name}

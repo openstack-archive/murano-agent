@@ -36,7 +36,8 @@ To build Ubuntu-based image
 
 .. sourcecode:: bash
 
-    sudo ELEMENTS_PATH=${murano_agent_root}/contrib/elements disk-image-create \
+    sudo ELEMENTS_PATH=${murano_agent_root}/contrib/elements \
+        DIB_CLOUD_INIT_DATASOURCES="Ec2, ConfigDrive, OpenStack" disk-image-create \
         vm ubuntu murano-agent -o ubuntu14.04-x64-agent
 
 To build Debian-based image

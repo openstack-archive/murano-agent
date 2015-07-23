@@ -33,6 +33,10 @@ class TestPuppetExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         node = self.puppet_executor._create_manifest('cookbook', 'recipe')
         self.assertEqual(node, self.get_manifest('cookbook', 'recipe'))
 
+    def test_create_manifest_norecipe(self):
+        node = self.puppet_executor._create_manifest('cookbook', '')
+        self.assertEqual(node, self.get_manifest_norecipe('cookbook'))
+
     def test_create_hierdata(self):
         atts = {
             'att1': 'value1',
@@ -126,4 +130,8 @@ class TestPuppetExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
 
     def get_manifest(self, cookbook, recipe):
         return "node \'default\' { " \
-               "class  { " + cookbook + '::' + recipe + ':}}'
+               "class { " + cookbook + '::' + recipe + ':}}'
+
+    def get_manifest_norecipe(self, cookbook):
+        return "node \'default\' { " \
+               "class { " + cookbook + ':}}'

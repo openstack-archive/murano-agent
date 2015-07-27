@@ -35,6 +35,22 @@ class TestFileManager(base.MuranoAgentTestCase):
         super(TestFileManager, self).setUp()
         CONF.set_override('storage', 'cache')
 
+    def test_is_svn(self):
+        files = files_manager.FilesManager(self.get_template_downloable())
+        self.assertTrue(files._is_svn_repository("https://sdfa/svn/ss"))
+
+    def test_is_svn_first(self):
+        files = files_manager.FilesManager(self.get_template_downloable())
+        self.assertTrue(files._is_svn_repository("svn://test"))
+
+    def test_is_svn_wrong_http_protocol(self):
+        files = files_manager.FilesManager(self.get_template_downloable())
+        self.assertFalse(files._is_svn_repository("httpp://sdfa/svn/ss"))
+
+    def test_is_svn_wrong_svn_slash(self):
+        files = files_manager.FilesManager(self.get_template_downloable())
+        self.assertFalse(files._is_svn_repository("svn:sdfa/svn/ss"))
+
     @mock.patch('os.makedirs')
     def test_get_folder_git(self, mock_path):
         """It gets the folder where the URL is a git URL."""
@@ -87,6 +103,20 @@ class TestFileManager(base.MuranoAgentTestCase):
 
         template = self.get_template_downloable()
         files = files_manager.FilesManager(self.get_template_downloable())
+        files._download_url_file(template.Files['file'])
+
+    @mock.patch('subprocess.Popen')
+    @mock.patch('os.makedirs')
+    def test_execution_plan_type_svn(self, mock_makedir, mock_subproc_popen):
+        """Test an execution plan with svn files."""
+        process_mock = mock.Mock()
+        attrs = {'communicate.return_value': ('ouput', 'ok'),
+                 'poll.return_value': 0}
+        process_mock.configure_mock(**attrs)
+        mock_subproc_popen.return_value = process_mock
+
+        template = self.get_template_svn()
+        files = files_manager.FilesManager(template)
         files._download_url_file(template.Files['file'])
 
     @mock.patch('os.makedirs')
@@ -164,7 +194,19 @@ class TestFileManager(base.MuranoAgentTestCase):
             Files={
                 'file': {
                     'Name': 'myfile',
-                    'URL': 'https://www.apache.org/licenses/LICENSE-2.0',
+                    'URL': 'https://www.apache.org/licenses',
+                    'Type': 'Downloadable'
+                }
+            }
+        )
+
+    def get_template_svn(self):
+        return bunch.Bunch(
+            ID='ID',
+            Files={
+                'file': {
+                    'Name': 'svn',
+                    'URL': 'https://mysvn/svn/repo',
                     'Type': 'Downloadable'
                 }
             }

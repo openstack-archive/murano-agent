@@ -28,18 +28,21 @@ if os.path.exists(os.path.join(possible_topdir,
                                '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
+from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_service import service
 
 from muranoagent import app
 from muranoagent.common import config
-from muranoagent.openstack.common import log
+
+CONF = cfg.CONF
 
 
 def main():
     try:
         config.parse_args()
-        log.setup('muranoagent')
-        launcher = service.ServiceLauncher(config.CONF)
+        logging.setup(CONF, 'muranoagent')
+        launcher = service.ServiceLauncher(CONF)
         launcher.launch_service(app.MuranoAgent())
         launcher.wait()
     except RuntimeError as e:

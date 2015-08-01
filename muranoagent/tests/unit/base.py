@@ -15,6 +15,8 @@ import fixtures
 from oslo_config import cfg
 import testtools
 
+from muranoagent.common import config  # noqa
+
 CONF = cfg.CONF
 
 

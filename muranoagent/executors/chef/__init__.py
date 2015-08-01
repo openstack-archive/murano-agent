@@ -18,10 +18,11 @@ import json
 import os
 import subprocess
 
+from oslo_log import log as logging
+
 import muranoagent.exceptions
 from muranoagent import executors
 from muranoagent.executors import chef_puppet_executor_base
-from muranoagent.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

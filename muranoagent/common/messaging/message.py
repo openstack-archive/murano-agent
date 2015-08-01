@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import anyjson
-import logging
+from oslo_log import log as logging
 
 LOG = logging.getLogger("murano-common.messaging")
 

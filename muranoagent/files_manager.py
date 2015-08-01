@@ -20,8 +20,9 @@ import requests
 import shutil
 import urlparse
 
+from oslo_log import log as logging
+
 from muranoagent.common import config
-from muranoagent.openstack.common import log as logging
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)

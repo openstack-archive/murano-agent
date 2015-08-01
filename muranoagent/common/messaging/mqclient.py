@@ -14,15 +14,11 @@
 # limitations under the License.
 
 import anyjson
-import logging
 import ssl as ssl_module
 
 from eventlet import patcher
 kombu = patcher.import_patched('kombu')
 from subscription import Subscription
-
-
-log = logging.getLogger("murano-common.messaging")
 
 
 class MqClient(object):

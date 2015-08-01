@@ -15,8 +15,9 @@
 
 import uuid
 
+from oslo_utils import timeutils
+
 from muranoagent import exceptions as exc
-from muranoagent.openstack.common import timeutils
 
 
 class ExecutionResult(object):

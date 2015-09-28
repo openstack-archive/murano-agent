@@ -16,11 +16,14 @@
 import base64
 import git
 import os
+import re
 import requests
 import shutil
+import subprocess
 import urlparse
 
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 
 from muranoagent.common import config
 
@@ -113,6 +116,8 @@ class FilesManager(object):
         try:
             if self._is_git_repository(url_file):
                 git.Git().clone(url_file, folder)
+            elif self._is_svn_repository(url_file):
+                self._download_svn(url_file, folder)
             else:
                 self._download_file(url_file, folder)
         except Exception as e:
@@ -160,3 +165,41 @@ class FilesManager(object):
         return (url.startswith(("git://",
                                "git+http://", "git+https:/"))
                 or url.endswith('.git'))
+
+    def _is_svn_repository(self, url):
+        http_regex = "https?://(.*)/svn/(.*)"
+        http_matches = re.search(http_regex, url)
+        svn_regex = "svn://(.*)"
+        svn_matches = re.search(svn_regex, url)
+        if http_matches is None and svn_matches is None:
+            return False
+        else:
+            return True
+
+    def _download_svn(self, url_file, folder):
+        self._execute_command("svn checkout {0} --non-interactive "
+                              "--trust-server-cert {1}".
+                              format(url_file, folder))
+
+    def _execute_command(self, command):
+
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            cwd=os.getcwd(),
+            shell=True)
+        stdout, stderr = process.communicate(input)
+        retcode = process.poll()
+
+        if stdout is not None:
+            stdout = encodeutils.safe_decode('utf-8')
+            LOG.debug(stdout)
+
+        if stderr is not None:
+            stderr = encodeutils.safe_decode('utf-8')
+            LOG.error(stderr)
+
+        if retcode != 0:
+            raise ValueError(stderr)

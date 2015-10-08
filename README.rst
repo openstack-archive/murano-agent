@@ -23,8 +23,7 @@ to Glance with the following commands:
     murano-agent -o ubuntu-murano-agent.qcow2
   $ glance image-create --disk-format qcow2 --container-format bare \
     --name ubuntu-murano --file ubuntu-murano.qcow2 \
-    --property murano_image_info='{"title": "Ubuntu for Murano", \
-    "type": "linux"}'
+    --property murano_image_info='{"title": "Ubuntu for Murano", "type": "linux"}'
 
 Project Resources
 -----------------

@@ -51,24 +51,6 @@ class TestFileManager(base.MuranoAgentTestCase):
         files = files_manager.FilesManager(self.get_template_downloable())
         self.assertFalse(files._is_svn_repository("svn:sdfa/svn/ss"))
 
-    @mock.patch('os.makedirs')
-    def test_get_folder_git(self, mock_path):
-        """It gets the folder where the URL is a git URL."""
-        mock_path.return_value = None
-        files = files_manager.FilesManager(self.get_template_downloable())
-        folder = files._get_file_folder("http://tomcat.git", "tomcat")
-        self.assertEqual(folder,
-                         os.path.normpath("cache/files/ID/files/tomcat"))
-
-    @mock.patch('os.makedirs')
-    def test_get_folder_not_git(self, mock_path):
-        """It gets the folder from the URL."""
-        mock_path.return_value = None
-        files = files_manager.FilesManager(self.get_template_downloable())
-        folder = files._get_file_folder("http://tomcat", "tomcat")
-        self.assertEqual(folder,
-                         os.path.normpath("cache/files/ID/files/tomcat"))
-
     @mock.patch("git.Git")
     @mock.patch('os.path.isdir')
     @mock.patch('os.makedirs')
@@ -82,7 +64,7 @@ class TestFileManager(base.MuranoAgentTestCase):
         mock_git.clone.return_value = None
         template = self.get_template_downloable_git()
         files = files_manager.FilesManager(self.get_template_downloable())
-        files._download_url_file(template.Files['mycoockbook'])
+        files._download_url_file(template.Files['mycoockbook'], "script")
 
     @mock.patch('os.path.isdir')
     @mock.patch('os.mkdir')
@@ -103,7 +85,7 @@ class TestFileManager(base.MuranoAgentTestCase):
 
         template = self.get_template_downloable()
         files = files_manager.FilesManager(self.get_template_downloable())
-        files._download_url_file(template.Files['file'])
+        files._download_url_file(template.Files['file'], "script")
 
     @mock.patch('subprocess.Popen')
     @mock.patch('os.makedirs')
@@ -117,7 +99,7 @@ class TestFileManager(base.MuranoAgentTestCase):
 
         template = self.get_template_svn()
         files = files_manager.FilesManager(template)
-        files._download_url_file(template.Files['file'])
+        files._download_url_file(template.Files['file'], "script")
 
     @mock.patch('os.makedirs')
     def test_execution_plan_type_downloable_no_Url(self, mock_makedir):
@@ -134,18 +116,21 @@ class TestFileManager(base.MuranoAgentTestCase):
         )
         files = files_manager.FilesManager(template)
         self.assertRaises(ValueError, files._download_url_file,
-                          template.Files['mycoockbook'])
+                          template.Files['mycoockbook'], "script")
 
     @mock.patch("git.Git")
     @mock.patch('os.path.isdir')
     @mock.patch('os.makedirs')
-    def test_putfile_downloable(self, mock_makedir, path, mock_git):
+    @mock.patch('os.path.lexists')
+    def test_putfile_downloable(self, mock_exists, mock_makedir,
+                                path, mock_git):
         """It tests the putfile method when the file is a git URL.
 
         """
         path.return_value = True
         mock_git.clone.return_value = None
         mock_makedir.return_value = None
+        mock_exists.return_value = True
         template = self.get_template_downloable_git()
         files = files_manager.FilesManager(template)
         for file in template.get('Files'):

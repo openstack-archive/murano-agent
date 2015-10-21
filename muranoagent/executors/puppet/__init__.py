@@ -54,15 +54,14 @@ class PuppetExecutor(chef_puppet_executor_base.ChefPuppetExecutorBase):
                         (self.module_name, self.module_recipe, e.strerror),
                 additional_data=result)
 
-        path = os.path.abspath(self._path + "/files/")
         command = 'puppet apply --hiera_config=hiera.yaml --modulepath ' \
-                  '{0} manifest.pp'.format(path)
+                  '{0} manifest.pp'.format(self._path)
         result = self._execute_command(command)
         return bunch.Bunch(result)
 
     def _configure_puppet(self):
 
-        if os.path.exists('hiera.yam'):
+        if os.path.exists('hiera.yaml'):
             return
 
         data = dict(

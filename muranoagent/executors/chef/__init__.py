@@ -56,20 +56,19 @@ class ChefExecutor(chef_puppet_executor_base.ChefPuppetExecutorBase):
                     self.module_name, self.module_recipe, e.strerror,
                 ), additional_data=result)
 
-        solo_file = os.path.join(self._path, "files", "solo.rb")
+        solo_file = os.path.join(self._path, "solo.rb")
         command = 'chef-solo -j node.json -c {0}'.format(solo_file)
         result = self._execute_command(command)
         return bunch.Bunch(result)
 
     def _configure_chef(self):
         """It generates the chef files for configuration."""
-        solo_file = os.path.join(self._path, 'files', 'solo.rb')
+        solo_file = os.path.join(self._path, 'solo.rb')
         if not os.path.exists(solo_file):
-            path = os.path.abspath(os.path.join(self._path, "files"))
-            if not os.path.isdir(path):
-                os.makedirs(path)
+            if not os.path.isdir(self._path):
+                os.makedirs(self._path)
             with open(solo_file, "w+") as f:
-                f.write('cookbook_path \"' + path + '\"')
+                f.write('cookbook_path \"' + self._path + '\"')
 
     def _generate_manifest(self, cookbook_name,
                            cookbook_recipe, recipe_attributes):

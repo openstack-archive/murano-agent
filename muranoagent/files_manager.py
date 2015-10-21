@@ -51,13 +51,13 @@ class FilesManager(object):
             file_name = file_def['Name']
 
         if file_def.get('Type') == 'Downloadable':
-            self._download_url_file(file_def)
-            return self._cache_folder
+            cache_folder = self._download_url_file(file_def, file_id)
+            return self._make_symlink(cache_folder, file_name, script)
         else:
-            return self._make_symlink(file_id, file_name, script)
+            cache_path = self._fetch_file(file_id)
+            return self._make_symlink(cache_path, file_name, script)
 
-    def _make_symlink(self, file_id, file_name, script):
-        cache_path = self._fetch_file(file_id)
+    def _make_symlink(self, cache_path, file_name, script):
         script_folder = os.path.join(self._cache_folder, script)
         if not os.path.isdir(script_folder):
             os.mkdir(script_folder)
@@ -89,12 +89,17 @@ class FilesManager(object):
         self._fetched_files[file_id] = out_path
         return out_path
 
-    def _download_url_file(self, file_def):
+    def _download_url_file(self, file_def, file_id):
         """It download the file in the murano-agent.
 
         It can proceed from a git file or any other internal URL
-
+           :param file_def: file description
+           :param file_id: the ID file to download
+           :param input:
         """
+        folder = os.path.join(self._cache_folder, file_id)
+        if os.path.isdir(folder):
+            return folder
 
         if 'URL' not in file_def:
             raise ValueError("No valid URL in file {0}".
@@ -104,11 +109,6 @@ class FilesManager(object):
         if not self._url(url_file):
             raise ValueError("Provided URL is not valid {0}".
                              format(url_file))
-
-        if not os.path.isdir(os.path.join(self._cache_folder, 'files')):
-            os.makedirs(os.path.join(self._cache_folder, 'files'))
-
-        folder = self._get_file_folder(url_file, file_def['Name'])
 
         if not os.path.isdir(folder):
             os.makedirs(folder)
@@ -129,6 +129,7 @@ class FilesManager(object):
                        format(url_file, e.message))
             LOG.warn(mns)
             raise ValueError(mns)
+        return folder
 
     def clear(self):
         shutil.rmtree(self._cache_folder, ignore_errors=True)
@@ -146,19 +147,6 @@ class FilesManager(object):
     def _url(self, file):
         return (urlparse.urlsplit(file).scheme or
                 urlparse.urlsplit(file).netloc)
-
-    def _get_file_folder(self, file_url, folder_name):
-        if folder_name is None:
-            if file_url.endswith('.git'):
-                file_folder = file_url[file_url.rfind('/') +
-                                       1: file_url.find('.git')]
-            else:
-                file_folder = file_url[file_url.rfind('/') + 1:]
-
-            folder = os.path.join(self._cache_folder, 'files', file_folder)
-        else:
-            folder = os.path.join(self._cache_folder, 'files', folder_name)
-        return folder
 
     def _is_git_repository(self, url):
         return (url.startswith(("git://",

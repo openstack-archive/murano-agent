@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from muranoagent import executors as exe
 
 
@@ -70,5 +72,4 @@ class ScriptRunner(object):
         if self._script_info["Type"] == 'Application':
             return self._files_manager.put_file(
                 self._script_info["EntryPoint"], self._name)
-        else:
-            return self._files_manager._cache_folder
+        return os.path.join(self._files_manager._cache_folder, self._name)

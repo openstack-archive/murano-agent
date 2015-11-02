@@ -33,7 +33,7 @@ from muranoagent import execution_result as ex_result
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
-max_format_version = semantic_version.Spec('<=2.1.0')
+max_format_version = semantic_version.Spec('<=2.2.0')
 
 
 class MuranoAgent(service.Service):
@@ -212,7 +212,7 @@ class MuranoAgent(service.Service):
                     2, 'Script {0} misses entry point {1}'.format(
                         name, script['EntryPoint']))
 
-        if plan_format_version in semantic_version.Spec('==2.1.0'):
+        if plan_format_version in semantic_version.Spec('>=2.1.0'):
             if script['Type'] not in ('Application', 'Chef', 'Puppet'):
                 raise exc.IncorrectFormat(
                     2, 'Script has not a valid type {0}'.format(
@@ -228,6 +228,18 @@ class MuranoAgent(service.Service):
                         2, 'Wrong EntryPoint {0} for Puppet/Chef '
                            'executors. :: needed'.format(name,
                                                          script['EntryPoint']))
+
+            for option in script['Options']:
+                if option in ('useBerkshelf', 'berksfilePath'):
+                    if plan_format_version in semantic_version.Spec('<2.2.0'):
+                        raise exc.IncorrectFormat(
+                            2, 'Script has an option {0} invalid '
+                               'for version {1}'.format(option,
+                                                        plan_format_version))
+                    elif script['Type'] != 'Chef':
+                        raise exc.IncorrectFormat(
+                            2, 'Script has an option {0} invalid '
+                               'for type {1}'.format(option, script['Type']))
 
         for additional_file in script.get('Files', []):
                 mns_error = ('Script {0} misses file {1}'.

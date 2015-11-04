@@ -132,7 +132,6 @@ class FilesManager(object):
 
     def clear(self):
         shutil.rmtree(self._cache_folder, ignore_errors=True)
-        shutil.rmtree(self._cache_folder, ignore_errors=True)
 
     def _download_file(self, url, path):
         local_filename = url.split('/')[-1]

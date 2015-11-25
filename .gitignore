@@ -44,3 +44,6 @@ etc/muranoagent/muranoagent.conf.sample
 
 #swap file
 *.swp
+
+# Files created by releasenotes build
+releasenotes/build

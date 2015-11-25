@@ -18,8 +18,8 @@ import os
 import shutil
 import time
 
-import bunch
 
+from muranoagent import bunch
 from muranoagent.common import config
 
 CONF = config.CONF

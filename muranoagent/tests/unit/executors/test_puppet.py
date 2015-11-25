@@ -11,10 +11,11 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import bunch
+
 import fixtures
 import mock
 
+from muranoagent import bunch
 from muranoagent.common import config as cfg
 from muranoagent import exceptions as ex
 from muranoagent.executors import puppet

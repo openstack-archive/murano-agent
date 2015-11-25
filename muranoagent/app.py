@@ -18,11 +18,11 @@ import sys
 import time
 import types
 
-import bunch
 from oslo_log import log as logging
 from oslo_service import service
 import semantic_version
 
+from muranoagent import bunch
 from muranoagent.common import config
 from muranoagent.common import messaging
 from muranoagent import exceptions as exc

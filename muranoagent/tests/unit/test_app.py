@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import bunch
 import fixtures
 import mock
 
 from muranoagent import app
+from muranoagent import bunch
 from muranoagent.common import config as cfg
 from muranoagent import exceptions as exc
 from muranoagent.tests.unit import base

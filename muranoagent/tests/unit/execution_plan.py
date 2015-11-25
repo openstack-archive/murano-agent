@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bunch
 import fixtures
+
+from muranoagent import bunch
 
 
 class ExPlanDownloable(fixtures.Fixture):

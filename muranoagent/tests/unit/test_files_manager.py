@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import bunch
 import mock
 import os.path
 
+from muranoagent import bunch
 from muranoagent.common import config as cfg
 from muranoagent import files_manager
 from muranoagent.tests.unit import base

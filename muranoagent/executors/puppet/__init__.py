@@ -12,13 +12,13 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import bunch
 import os
 import subprocess
 import yaml
 
 from oslo_log import log as logging
 
+from muranoagent import bunch
 import muranoagent.exceptions
 from muranoagent import executors
 from muranoagent.executors import chef_puppet_executor_base

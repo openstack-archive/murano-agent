@@ -15,8 +15,8 @@
 
 import sys
 
-import bunch
 
+from muranoagent import bunch
 from muranoagent import files_manager as fm
 from muranoagent import script_runner
 

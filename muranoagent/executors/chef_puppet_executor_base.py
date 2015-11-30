@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bunch
 import json
 import os
 import subprocess
 
 from oslo_log import log as logging
 
+from muranoagent import bunch
 import muranoagent.exceptions
 from muranoagent import executors
 

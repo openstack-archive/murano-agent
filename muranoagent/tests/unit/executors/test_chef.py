@@ -16,6 +16,8 @@ import bunch
 import fixtures
 import json
 import mock
+from mock import ANY
+import os
 
 from muranoagent.common import config as cfg
 from muranoagent import exceptions as ex
@@ -49,13 +51,16 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
     @mock.patch('subprocess.Popen')
     @mock.patch('__builtin__.open')
     @mock.patch('os.path.exists')
-    def test_cookbook(self, mock_exist, open_mock, mock_subproc_popen):
+    @mock.patch('os.path.isdir')
+    def test_cookbook(self, mock_isdir, mock_exist, open_mock,
+                      mock_subproc_popen):
         """It tests chef executor."""
         self._open_mock(open_mock)
         mock_exist.return_value = True
+        mock_isdir.return_value = True
 
         process_mock = mock.Mock()
-        attrs = {'communicate.return_value': ('ouput', 'ok'),
+        attrs = {'communicate.return_value': ('output', 'ok'),
                  'poll.return_value': 0}
         process_mock.configure_mock(**attrs)
         mock_subproc_popen.return_value = process_mock
@@ -68,13 +73,16 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
     @mock.patch('subprocess.Popen')
     @mock.patch('__builtin__.open')
     @mock.patch('os.path.exists')
-    def test_cookbook_error(self, mock_exist, open_mock, mock_subproc_popen):
+    @mock.patch('os.path.isdir')
+    def test_cookbook_error(self, mock_isdir, mock_exist, open_mock,
+                            mock_subproc_popen):
         """It tests chef executor with error in the request."""
         self._open_mock(open_mock)
         mock_exist.return_value = True
+        mock_isdir.return_value = True
 
         process_mock = mock.Mock()
-        attrs = {'communicate.return_value': ('ouput', 'error'),
+        attrs = {'communicate.return_value': ('output', 'error'),
                  'poll.return_value': 2}
         process_mock.configure_mock(**attrs)
         mock_subproc_popen.return_value = process_mock
@@ -90,6 +98,97 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         chef_executor = chef.ChefExecutor('wrong')
         self.assertRaises(ex.CustomException, chef_executor.run,
                           'test')
+
+    def test_chef_no_berkshelf(self):
+        """It tests the cookbook path if Berkshelf is not enabled"""
+        template = self.useFixture(ep.ExPlanDownloable()).execution_plan
+        self.chef_executor.load('path',
+                                template['Scripts'].values()[0]['Options'])
+        cookbook_path = self.chef_executor._create_cookbook_path('cookbook')
+        self.assertEqual(cookbook_path, os.path.abspath('path'))
+
+    @mock.patch('subprocess.Popen')
+    @mock.patch('os.path.isfile')
+    def test_chef_berkshelf_default_berksfile(self, mock_isfile,
+                                              mock_subproc_popen):
+        """It tests Berkshelf usage if no Berksfile path is provided"""
+        mock_isfile.return_value = True
+
+        process_mock = mock.Mock()
+        attrs = {'communicate.return_value': ('output', 'ok'),
+                 'poll.return_value': 0}
+        process_mock.configure_mock(**attrs)
+        mock_subproc_popen.return_value = process_mock
+
+        template = self.useFixture(ep.ExPlanBerkshelf()).execution_plan
+        self.chef_executor.load('path',
+                                template['Scripts'].values()[0]['Options'])
+        self.chef_executor.module_name = 'test'
+        cookbook_path = self.chef_executor._create_cookbook_path('cookbook')
+
+        self.assertEqual(cookbook_path,
+                         os.path.abspath('path/berks-cookbooks'))
+        expected_command = 'berks vendor --berksfile={0} {1}'.format(
+                           os.path.abspath('path/cookbook/Berksfile'),
+                           cookbook_path)
+        mock_subproc_popen.assert_called_once_with(expected_command,
+                                                   cwd=ANY,
+                                                   shell=ANY,
+                                                   stdout=ANY,
+                                                   stderr=ANY,
+                                                   universal_newlines=ANY)
+
+    @mock.patch('subprocess.Popen')
+    @mock.patch('os.path.isfile')
+    def test_chef_berkshelf_custom_berksfile(self, mock_isfile,
+                                             mock_subproc_popen):
+        """It tests Berkshelf usage if a custom Berksfile is provided"""
+        mock_isfile.return_value = True
+
+        process_mock = mock.Mock()
+        attrs = {'communicate.return_value': ('output', 'ok'),
+                 'poll.return_value': 0}
+        process_mock.configure_mock(**attrs)
+        mock_subproc_popen.return_value = process_mock
+
+        template = self.useFixture(ep.ExPlanCustomBerskfile()).execution_plan
+        self.chef_executor.load('path',
+                                template['Scripts'].values()[0]['Options'])
+        self.chef_executor.module_name = 'test'
+        cookbook_path = self.chef_executor._create_cookbook_path('cookbook')
+
+        self.assertEqual(cookbook_path,
+                         os.path.abspath('path/berks-cookbooks'))
+        expected_command = 'berks vendor --berksfile={0} {1}'.format(
+                           os.path.abspath('path/custom/customFile'),
+                           cookbook_path)
+        mock_subproc_popen.assert_called_once_with(expected_command,
+                                                   cwd=ANY,
+                                                   shell=ANY,
+                                                   stdout=ANY,
+                                                   stderr=ANY,
+                                                   universal_newlines=ANY)
+
+    @mock.patch('subprocess.Popen')
+    @mock.patch('os.path.isfile')
+    def test_chef_berkshelf_error(self, mock_isfile,
+                                  mock_subproc_popen):
+        """It tests if Berkshelf throws an error"""
+        mock_isfile.return_value = True
+
+        process_mock = mock.Mock()
+        attrs = {'communicate.return_value': ('output', 'error'),
+                 'poll.return_value': 2}
+        process_mock.configure_mock(**attrs)
+        mock_subproc_popen.return_value = process_mock
+
+        template = self.useFixture(ep.ExPlanBerkshelf()).execution_plan
+        self.chef_executor.load('path',
+                                template['Scripts'].values()[0]['Options'])
+        self.chef_executor.module_name = 'test'
+        self.assertRaises(ex.CustomException,
+                          self.chef_executor._create_cookbook_path,
+                          'cookbook')
 
     def _open_mock(self, open_mock):
         context_manager_mock = mock.Mock()

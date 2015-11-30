@@ -189,3 +189,115 @@ class PuppetExPlanDownloable(fixtures.Fixture):
             Version='1.0.0'
         )
         self.addCleanup(delattr, self, 'execution_plan')
+
+
+class ExPlanBerkshelf(fixtures.Fixture):
+    def setUp(self):
+        super(ExPlanBerkshelf, self).setUp()
+        self.execution_plan = bunch.Bunch(
+            Action='Execute',
+            Body='return deploy(args.appName).stdout\n',
+            Files={
+                'ID1': {
+                    'Name': 'tomcat.git',
+                    'Type': 'Downloadable',
+                    'URL': 'https://github.com/tomcat.git'
+                }
+            },
+            FormatVersion='2.2.0',
+            ID='ID',
+            Name='Deploy Chef',
+            Parameters={},
+            Scripts={
+                'deploy': {
+                    'EntryPoint': 'cookbook::recipe',
+                    'Files': [
+                        'ID1'
+                    ],
+                    'Options': {
+                        'captureStderr': True,
+                        'captureStdout': True,
+                        'useBerkshelf': True
+                    },
+                    'Type': 'Chef',
+                    'Version': '1.0.0'
+                }
+            },
+            Version='1.0.0'
+        )
+        self.addCleanup(delattr, self, 'execution_plan')
+
+
+class ExPlanCustomBerskfile(fixtures.Fixture):
+    def setUp(self):
+        super(ExPlanCustomBerskfile, self).setUp()
+        self.execution_plan = bunch.Bunch(
+            Action='Execute',
+            Body='return deploy(args.appName).stdout\n',
+            Files={
+                'ID1': {
+                    'Name': 'tomcat.git',
+                    'Type': 'Downloadable',
+                    'URL': 'https://github.com/tomcat.git'
+                }
+            },
+            FormatVersion='2.2.0',
+            ID='ID',
+            Name='Deploy Chef',
+            Parameters={},
+            Scripts={
+                'deploy': {
+                    'EntryPoint': 'cookbook::recipe',
+                    'Files': [
+                        'ID1'
+                    ],
+                    'Options': {
+                        'captureStderr': True,
+                        'captureStdout': True,
+                        'useBerkshelf': True,
+                        'berksfilePath': 'custom/customFile'
+                    },
+                    'Type': 'Chef',
+                    'Version': '1.0.0'
+                }
+            },
+            Version='1.0.0'
+        )
+        self.addCleanup(delattr, self, 'execution_plan')
+
+
+class ExPlanBerkWrongVersion(fixtures.Fixture):
+    def setUp(self):
+        super(ExPlanBerkWrongVersion, self).setUp()
+        self.execution_plan = bunch.Bunch(
+            Action='Execute',
+            Body='return deploy(args.appName).stdout\n',
+            Files={
+                'ID1': {
+                    'Name': 'tomcat.git',
+                    'Type': 'Downloadable',
+                    'URL': 'https://github.com/tomcat.git'
+                }
+            },
+            FormatVersion='2.1.0',
+            ID='ID',
+            Name='Deploy Chef',
+            Parameters={},
+            Scripts={
+                'deploy': {
+                    'EntryPoint': 'cookbook::recipe',
+                    'Files': [
+                        'ID1'
+                    ],
+                    'Options': {
+                        'captureStderr': True,
+                        'captureStdout': True,
+                        'useBerkshelf': True
+                    },
+                    'Type': 'Chef',
+                    'Version': '1.0.0'
+                }
+            },
+            Version='1.0.0'
+        )
+        self.addCleanup(delattr, self, 'execution_plan')

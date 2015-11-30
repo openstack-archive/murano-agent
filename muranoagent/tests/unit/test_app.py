@@ -71,3 +71,12 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
         template = self.useFixture(ep.ExPlanDownloableNoFiles()).execution_plan
         self.assertRaises(exc.IncorrectFormat,
                           self.agent._verify_plan, template)
+
+    def test_verify_execution_plan_berkshelf(self):
+        template = self.useFixture(ep.ExPlanBerkshelf()).execution_plan
+        self.agent._verify_plan(template)
+
+    def test_verify_execution_plan_berkshelf_wrong_version(self):
+        template = self.useFixture(ep.ExPlanBerkWrongVersion()).execution_plan
+        self.assertRaises(exc.IncorrectFormat,
+                          self.agent._verify_plan, template)

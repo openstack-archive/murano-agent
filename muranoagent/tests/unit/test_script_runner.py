@@ -41,11 +41,13 @@ class TestScriptRunner(base.MuranoAgentTestCase):
                           mock_file_manager)
         scripts._prepare_files()
 
-    def _stub_uuid(self, values=[]):
+    def _stub_uuid(self, values=None):
         class FakeUUID(object):
             def __init__(self, v):
                 self.hex = v
 
+        if values is None:
+            values = []
         mock_uuid4 = mock.patch('uuid.uuid4').start()
         mock_uuid4.side_effect = [FakeUUID(v) for v in values]
         return mock_uuid4

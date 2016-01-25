@@ -201,11 +201,13 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         setattr(context_manager_mock, '__enter__', enter_mock)
         setattr(context_manager_mock, '__exit__', exit_mock)
 
-    def _stub_uuid(self, values=[]):
+    def _stub_uuid(self, values=None):
         class FakeUUID(object):
             def __init__(self, v):
                 self.hex = v
 
+        if values is None:
+            values = []
         mock_uuid4 = mock.patch('uuid.uuid4').start()
         mock_uuid4.side_effect = [FakeUUID(v) for v in values]
         return mock_uuid4

@@ -5,7 +5,7 @@ hacking<0.11,>=0.10.0
 unittest2 # BSD
 coverage>=3.6 # Apache-2.0
 discover # BSD
-mock>=1.2;python_version<'3.3' # BSD
+mock>=1.2 # BSD
 testtools>=1.4.0 # MIT
 testrepository>=0.0.18 # Apache-2.0/BSD
 

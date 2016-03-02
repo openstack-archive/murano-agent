@@ -28,16 +28,16 @@ def print_help(venv, root):
     help = """
     Murano agent development environment setup is complete.
 
-    Murano agent development uses virtualenv to track and manage Python dependencies
-    while in development and testing.
+    Murano agent development uses virtualenv to track and manage Python
+    dependencies while in development and testing.
 
-    To activate the Murano agent virtualenv for the extent of your current shell
-    session you can run:
+    To activate the Murano agent virtualenv for the extent of your current
+    shell session you can run:
 
     $ source %s/bin/activate
 
-    Or, if you prefer, you can run commands in the virtualenv on a case by case
-    basis by running:
+    Or, if you prefer, you can run commands in the virtualenv on a case by
+    case basis by running:
 
     $ %s/tools/with_venv.sh <your command>
 
@@ -59,8 +59,8 @@ def main(argv):
     test_requires = os.path.join(root, 'test-requirements.txt')
     py_version = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
     project = 'Murano agent'
-    install = install_venv.InstallVenv(root, venv, pip_requires, test_requires,
-                             py_version, project)
+    install = install_venv.InstallVenv(root, venv, pip_requires,
+                                       test_requires, py_version, project)
     options = install.parse_args(argv)
     install.check_python_version()
     install.check_dependencies()

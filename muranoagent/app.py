@@ -124,6 +124,7 @@ class MuranoAgent(service.Service):
 
     def _wait_plan(self):
         delay = 5
+        reconnect = False
         while True:
             try:
                 with self._create_rmq_client() as mq:
@@ -134,10 +135,14 @@ class MuranoAgent(service.Service):
                             if msg is not None and isinstance(msg.body, dict):
                                 self._handle_message(msg)
 
+                            delay = 5
                             if msg is not None:
                                 msg.ack()
                                 yield
-                            delay = 5
+                                reconnect = True
+                            elif reconnect:
+                                reconnect = False
+                                break
             except KeyboardInterrupt:
                 break
             except Exception:

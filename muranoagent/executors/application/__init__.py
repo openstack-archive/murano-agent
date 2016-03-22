@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import signal
 import stat
 import subprocess
 import sys
@@ -52,13 +53,18 @@ class ApplicationExecutor(object):
         script_name = os.path.relpath(self._path)
         LOG.debug("Starting '{0}' script execution".format(script_name))
 
-        process = subprocess.Popen(
-            app,
-            stdout=stdout,
-            stderr=stderr,
-            universal_newlines=True,
-            cwd=dir_name,
-            shell=True)
+        popen_kwargs = {
+            'stdout': stdout,
+            'stderr': stderr,
+            'universal_newlines': True,
+            'cwd': dir_name,
+            'shell': True
+        }
+        if os.name != 'nt':
+            popen_kwargs['preexec_fn'] = lambda: signal.signal(
+                signal.SIGPIPE, signal.SIG_DFL)
+
+        process = subprocess.Popen(app, **popen_kwargs)
         stdout, stderr = process.communicate(input)
         retcode = process.poll()
         LOG.debug("Script {0} execution finished "

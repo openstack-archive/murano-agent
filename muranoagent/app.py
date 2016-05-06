@@ -118,7 +118,8 @@ class MuranoAgent(service.Service):
             'port': rabbitmq.port,
             'virtual_host': rabbitmq.virtual_host,
             'ssl': rabbitmq.ssl,
-            'ca_certs': rabbitmq.ca_certs.strip() or None
+            'ca_certs': rabbitmq.ca_certs.strip() or None,
+            'insecure': rabbitmq.insecure
         }
         return messaging.MqClient(**connection_params)
 

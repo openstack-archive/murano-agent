@@ -2,11 +2,10 @@
 
 set -eu
 
-install-packages git-core wget make gcc python-pip python-dev python-setuptools python-virtualenv chef puppet
+install-packages git-core wget make gcc python-pip python-dev python-setuptools chef puppet
 
 name=murano-agent
 svc_root=${DIB_MURANO_AGENT_SVC_ROOT:-/opt/stack/$name}
-install_dir=${DIB_MURANO_AGENT_INSTALL_DIR:-/opt/stack/venvs/$name}
 repo=${DIB_MURANO_AGENT_REPO:-git://git.openstack.org/openstack/murano-agent.git}
 branch=${DIB_MURANO_AGENT_BRANCH:-master}
 ref=${DIB_MURANO_AGENT_REF:-''}
@@ -20,15 +19,19 @@ if [ -n "$ref" ]; then
     popd
 fi
 
-# install murano-agent into virtualenv at /ops/stack/venvs/murano-agent
-virtualenv $install_dir
-$install_dir/bin/pip install $svc_root
+# install murano-agent to default location using pip
+# FIXME(starodubcevna): probably pip is not the best case for this. I suggest to
+# switch to package when they will be available to all supported distros.
+
+pip install $svc_root
 
 # setup config file at /etc/murano/agent.conf
 mkdir -p /etc/murano
 
+PATH="/usr/local/bin:/usr/bin:$PATH"
+
 pushd ${svc_root}
-${install_dir}/bin/oslo-config-generator --config-file ${svc_root}/etc/oslo-config-generator/muranoagent.conf
+oslo-config-generator --config-file ${svc_root}/etc/oslo-config-generator/muranoagent.conf
 popd
 
 cp ${svc_root}/etc/muranoagent/muranoagent.conf.sample /etc/murano/agent.conf.sample
@@ -40,4 +43,3 @@ fi
 if [ -d "/etc/systemd/system/" ]; then
     install -D -g root -o root -m 0755 $(dirname $0)/murano-agent.service /etc/systemd/system/
 fi
-

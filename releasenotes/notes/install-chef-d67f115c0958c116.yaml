@@ -1,0 +1,4 @@
+---
+fixes:
+  - Elements were updated to allow building murano fedora images with chef installed.
+    Chef is installed from https://packages.chef.io

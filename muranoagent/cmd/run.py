@@ -28,6 +28,10 @@ if os.path.exists(os.path.join(possible_topdir,
                                '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
+import eventlet
+eventlet.monkey_patch()
+
+
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import service

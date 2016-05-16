@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import anyjson
+import random
 import ssl as ssl_module
 
-from eventlet import patcher
-kombu = patcher.import_patched('kombu')
+import anyjson
+import eventlet
+import kombu
+
 from subscription import Subscription
 
 
@@ -38,6 +40,12 @@ class MqClient(object):
                 'cert_reqs': cert_reqs
             }
 
+        # Time interval after which RabbitMQ will disconnect client if no
+        # heartbeats were received. Usually client sends 2 heartbeats during
+        # this interval. Using random to make it less lucky that many agents
+        # ping RabbitMQ simultaneously
+        heartbeat_rate = 20 + 20 * random.random()
+
         self._connection = kombu.Connection(
             'amqp://{0}:{1}@{2}:{3}/{4}'.format(
                 login,
@@ -45,29 +53,52 @@ class MqClient(object):
                 host,
                 port,
                 virtual_host
-            ), ssl=ssl_params
+            ), ssl=ssl_params, heartbeat=heartbeat_rate
         )
         self._channel = None
         self._connected = False
+        self._exception = None
 
     def __enter__(self):
         self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        if exc_type:
+            self._connected = False
+        else:
+            self.close()
         return False
 
     def connect(self):
         self._connection.connect()
         self._channel = self._connection.channel()
-        self._connected = True
+        if not self._connected:
+            self._connected = True
+            eventlet.spawn(self._heartbeater)
 
     def close(self):
-        self._connection.close()
-        self._connected = False
+        if self._connected:
+            self._connection.close()
+            self._connected = False
+
+    def _check_exception(self):
+        ex = self._exception
+        if ex:
+            self._exception = None
+            raise ex
+
+    def _heartbeater(self):
+        while self._connected:
+            eventlet.sleep(1)
+            try:
+                self._connection.heartbeat_check()
+            except Exception as ex:
+                self._exception = ex
+                self._connected = False
 
     def declare(self, queue, exchange='', enable_ha=False, ttl=0):
+        self._check_exception()
         if not self._connected:
             raise RuntimeError('Not connected to RabbitMQ')
 
@@ -84,12 +115,13 @@ class MqClient(object):
             queue_arguments['x-expires'] = ttl
 
         exchange = kombu.Exchange(exchange, type='direct', durable=True)
-        queue = kombu.Queue(queue, exchange, queue, durable=True,
+        queue = kombu.Queue(queue, exchange, queue, durable=False,
                             queue_arguments=queue_arguments)
         bound_queue = queue(self._connection)
         bound_queue.declare()
 
     def send(self, message, key, exchange=''):
+        self._check_exception()
         if not self._connected:
             raise RuntimeError('Not connected to RabbitMQ')
 
@@ -102,7 +134,9 @@ class MqClient(object):
         )
 
     def open(self, queue, prefetch_count=1):
+        self._check_exception()
         if not self._connected:
             raise RuntimeError('Not connected to RabbitMQ')
 
-        return Subscription(self._connection, queue, prefetch_count)
+        return Subscription(self._connection, queue, prefetch_count,
+                            self._check_exception)

@@ -3,7 +3,7 @@ Description=OpenStack Murano Agent
 
 [Service]
 Type=simple
-ExecStart=/opt/stack/venvs/murano-agent/bin/muranoagent --config-dir /etc/murano
+ExecStart=/usr/local/bin/muranoagent --config-dir /etc/murano
 Restart=on-failure
 
 [Install]

@@ -17,19 +17,19 @@ import collections
 import socket
 import time
 
-from eventlet import patcher
-kombu = patcher.import_patched('kombu')
+import kombu
 from muranoagent.common.messaging import message
 
 
 class Subscription(object):
-    def __init__(self, connection, queue, prefetch_count=1):
+    def __init__(self, connection, queue, prefetch_count, exception_func):
         self._buffer = collections.deque()
         self._connection = connection
         self._queue = kombu.Queue(name=queue, exchange=None)
         self._consumer = kombu.Consumer(self._connection, auto_declare=False)
         self._consumer.register_callback(self._receive)
         self._consumer.qos(prefetch_count=prefetch_count)
+        self._check_exception = exception_func
 
     def __enter__(self):
         self._consumer.add_queue(self._queue)
@@ -37,17 +37,19 @@ class Subscription(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._consumer is not None:
+        if self._consumer is not None and not exc_type:
             self._consumer.cancel()
         return False
 
     def get_message(self, timeout=None):
+        self._check_exception()
         msg_handle = self._get(timeout=timeout)
         if msg_handle is None:
             return None
         return message.Message(self._connection, msg_handle)
 
     def _get(self, timeout=None):
+        self._check_exception()
         elapsed = 0.0
         remaining = timeout
         while True:
@@ -62,4 +64,5 @@ class Subscription(object):
             remaining = timeout and timeout - elapsed or None
 
     def _receive(self, message_data, message):
+        self._check_exception()
         self._buffer.append(message)

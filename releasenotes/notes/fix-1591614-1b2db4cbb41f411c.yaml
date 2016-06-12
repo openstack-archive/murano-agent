@@ -1,0 +1,4 @@
+---
+fixes:
+  - Fixed too many arguments provided for format exception message for wrong
+    entrypoint in Puppet/Chef executors.

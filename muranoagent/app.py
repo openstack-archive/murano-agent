@@ -227,8 +227,7 @@ class MuranoAgent(service.Service):
                   "::" not in script['EntryPoint']):
                     raise exc.IncorrectFormat(
                         2, 'Wrong EntryPoint {0} for Puppet/Chef '
-                           'executors. :: needed'.format(name,
-                                                         script['EntryPoint']))
+                           'executors. :: needed'.format(script['EntryPoint']))
 
             for option in script['Options']:
                 if option in ('useBerkshelf', 'berksfilePath'):

@@ -16,11 +16,11 @@
 import os
 import sys
 import time
-import types
 
 from oslo_log import log as logging
 from oslo_service import service
 import semantic_version
+import six
 
 from muranoagent import bunch
 from muranoagent.common import config
@@ -185,7 +185,7 @@ class MuranoAgent(service.Service):
 
         for attr in ('Scripts', 'Files', 'Options'):
             if attr in plan and not isinstance(
-                    plan[attr], types.DictionaryType):
+                    plan[attr], dict):
                 raise exc.IncorrectFormat(
                     2, '{0} is not a dictionary'.format(attr))
 
@@ -198,7 +198,7 @@ class MuranoAgent(service.Service):
     def _validate_script(self, name, script, plan_format_version, plan):
         for attr in ('Type', 'EntryPoint'):
             if attr not in script or not isinstance(script[attr],
-                                                    types.StringTypes):
+                                                    six.string_types):
                 raise exc.IncorrectFormat(
                     2, 'Incorrect {0} entry in script {1}'.format(
                         attr, name))

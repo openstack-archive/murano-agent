@@ -15,6 +15,7 @@
 
 import sys
 
+import six
 
 from muranoagent import bunch
 from muranoagent import files_manager as fm
@@ -34,7 +35,7 @@ class ExecutionPlanRunner(object):
             "args": bunch.Bunch(self._execution_plan.get('Parameters') or {})
         }
         script_globals.update(self._script_funcs)
-        exec self._main_script in script_globals
+        six.exec_(self._main_script, script_globals)
         if '__execution_plan_exception' in script_globals:
             raise script_globals['__execution_plan_exception']
         return script_globals['__execution_plan_result']

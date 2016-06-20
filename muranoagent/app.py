@@ -81,7 +81,7 @@ class MuranoAgent(service.Service):
             self._run(plan)
             return
 
-        msg_iterator.next()
+        next(msg_iterator)
 
     def _run(self, plan):
         try:
@@ -245,7 +245,7 @@ class MuranoAgent(service.Service):
                 mns_error = ('Script {0} misses file {1}'.
                              format(name, additional_file))
                 if isinstance(additional_file, dict):
-                    if (additional_file.keys()[0] not in
+                    if (list(additional_file.keys())[0] not in
                             plan.get('Files', {}).keys()):
                         raise exc.IncorrectFormat(2, mns_error)
                 elif additional_file not in plan.get('Files', {}):

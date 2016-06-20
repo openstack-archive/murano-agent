@@ -49,7 +49,7 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         self.assertEqual(node, self.get_nodejs_atts())
 
     @mock.patch('subprocess.Popen')
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     @mock.patch('os.path.exists')
     @mock.patch('os.path.isdir')
     def test_cookbook(self, mock_isdir, mock_exist, open_mock,
@@ -66,12 +66,13 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.ExPlanDownloable()).execution_plan
+        script = list(template['Scripts'].values())
         self.chef_executor.load('path',
-                                template['Scripts'].values()[0]['Options'])
+                                script[0]['Options'])
         self.chef_executor.run('test')
 
     @mock.patch('subprocess.Popen')
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     @mock.patch('os.path.exists')
     @mock.patch('os.path.isdir')
     def test_cookbook_error(self, mock_isdir, mock_exist, open_mock,
@@ -88,8 +89,9 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.ExPlanDownloable()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.chef_executor.load('path',
-                                template['Scripts'].values()[0]['Options'])
+                                script['Options'])
         self.assertRaises(ex.CustomException, self.chef_executor.run,
                           'test')
 
@@ -102,8 +104,9 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
     def test_chef_no_berkshelf(self):
         """It tests the cookbook path if Berkshelf is not enabled"""
         template = self.useFixture(ep.ExPlanDownloable()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.chef_executor.load('path',
-                                template['Scripts'].values()[0]['Options'])
+                                script['Options'])
         cookbook_path = self.chef_executor._create_cookbook_path('cookbook')
         self.assertEqual(cookbook_path, os.path.abspath('path'))
 
@@ -121,8 +124,9 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.ExPlanBerkshelf()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.chef_executor.load('path',
-                                template['Scripts'].values()[0]['Options'])
+                                script['Options'])
         self.chef_executor.module_name = 'test'
         cookbook_path = self.chef_executor._create_cookbook_path('cookbook')
 
@@ -152,8 +156,9 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.ExPlanCustomBerskfile()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.chef_executor.load('path',
-                                template['Scripts'].values()[0]['Options'])
+                                script['Options'])
         self.chef_executor.module_name = 'test'
         cookbook_path = self.chef_executor._create_cookbook_path('cookbook')
 
@@ -183,8 +188,9 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.ExPlanBerkshelf()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.chef_executor.load('path',
-                                template['Scripts'].values()[0]['Options'])
+                                script['Options'])
         self.chef_executor.module_name = 'test'
         self.assertRaises(ex.CustomException,
                           self.chef_executor._create_cookbook_path,

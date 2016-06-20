@@ -20,10 +20,10 @@ import re
 import requests
 import shutil
 import subprocess
-import urlparse
 
 from oslo_log import log as logging
 from oslo_utils import encodeutils
+from six.moves import urllib
 
 from muranoagent.common import config
 
@@ -44,7 +44,7 @@ class FilesManager(object):
 
     def put_file(self, file_id, script):
         if type(file_id) is dict:
-            file_name = file_id.keys()[0]
+            file_name = list(file_id.keys())[0]
             file_def = file_id[file_name]
         else:
             file_def = self._files[file_id]
@@ -145,8 +145,8 @@ class FilesManager(object):
         return local_filename
 
     def _url(self, file):
-        return (urlparse.urlsplit(file).scheme or
-                urlparse.urlsplit(file).netloc)
+        return (urllib.parse.urlsplit(file).scheme or
+                urllib.parse.urlsplit(file).netloc)
 
     def _is_git_repository(self, url):
         return (url.startswith(("git://",

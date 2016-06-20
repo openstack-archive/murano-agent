@@ -47,7 +47,7 @@ class TestPuppetExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         node = self.puppet_executor._create_hiera_data('cookbook', atts)
         self.assertEqual(node, self.get_hieradata())
 
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     def test_generate_files(self, open_mock):
         self._open_mock(open_mock)
         atts = {
@@ -57,13 +57,13 @@ class TestPuppetExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
 
         self.puppet_executor._generate_files('cookbook', 'recipe', atts)
 
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     def test_configure_puppet(self, open_mock):
         self._open_mock(open_mock)
         self.puppet_executor._configure_puppet()
 
     @mock.patch('subprocess.Popen')
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     def test_module(self, open_mock, mock_subproc_popen):
         #
         # setup
@@ -77,12 +77,13 @@ class TestPuppetExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.PuppetExPlanDownloable()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.puppet_executor.load('path',
-                                  template['Scripts'].values()[0]['Options'])
+                                  script['Options'])
         self.puppet_executor.run('test')
 
     @mock.patch('subprocess.Popen')
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     def test_module_error(self, open_mock, mock_subproc_popen):
         #
         # setup
@@ -96,8 +97,9 @@ class TestPuppetExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         mock_subproc_popen.return_value = process_mock
 
         template = self.useFixture(ep.PuppetExPlanDownloable()).execution_plan
+        script = list(template['Scripts'].values())[0]
         self.puppet_executor.load('path',
-                                  template['Scripts'].values()[0]['Options'])
+                                  script['Options'])
         self.assertRaises(ex.CustomException, self.puppet_executor.run,
                           'test')
 

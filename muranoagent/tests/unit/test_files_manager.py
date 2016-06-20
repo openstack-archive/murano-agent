@@ -69,7 +69,7 @@ class TestFileManager(base.MuranoAgentTestCase):
     @mock.patch('os.path.isdir')
     @mock.patch('os.mkdir')
     @mock.patch('os.makedirs')
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     @mock.patch('requests.get')
     def test_execution_plan_type_downloable(self, mock_requests, open_mock,
                                             mock_makedir,
@@ -136,7 +136,7 @@ class TestFileManager(base.MuranoAgentTestCase):
         for file in template.get('Files'):
             files.put_file(file, 'deploy')
 
-    @mock.patch('__builtin__.open')
+    @mock.patch('six.moves.builtins.open')
     @mock.patch('os.path.lexists')
     @mock.patch('os.path.isdir')
     @mock.patch('os.makedirs')

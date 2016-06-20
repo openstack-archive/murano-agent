@@ -20,7 +20,7 @@ import anyjson
 import eventlet
 import kombu
 
-from subscription import Subscription
+from muranoagent.common.messaging import subscription
 
 
 class MqClient(object):
@@ -138,5 +138,5 @@ class MqClient(object):
         if not self._connected:
             raise RuntimeError('Not connected to RabbitMQ')
 
-        return Subscription(self._connection, queue, prefetch_count,
-                            self._check_exception)
+        return subscription.Subscription(self._connection, queue,
+                                         prefetch_count, self._check_exception)

@@ -36,7 +36,7 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
     def test_create_nodejson_noatts(self):
         """It tests the manifest without attributes."""
         node = self.chef_executor._create_manifest('cookbook', 'recipe', None)
-        self.assertEqual(node, self.get_nodejs_no_atts())
+        self.assertEqual(json.loads(node), self.get_node_no_atts())
 
     def test_create_nodejson(self):
         """It tests a manifest with attributes."""
@@ -46,7 +46,7 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         }
 
         node = self.chef_executor._create_manifest('cookbook', 'recipe', atts)
-        self.assertEqual(node, self.get_nodejs_atts())
+        self.assertEqual(json.loads(node), self.get_node_atts())
 
     @mock.patch('subprocess.Popen')
     @mock.patch('six.moves.builtins.open')
@@ -243,8 +243,8 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
             }
         )
 
-    def get_nodejs_atts(self):
-        return json.dumps({
+    def get_node_atts(self):
+        return {
             "run_list": [
                 "recipe[cookbook::recipe]"
             ],
@@ -252,11 +252,11 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
                 "att1": "value1",
                 "att2": "value2"
             }
-        })
+        }
 
-    def get_nodejs_no_atts(self):
-        return json.dumps({
+    def get_node_no_atts(self):
+        return {
             "run_list": [
                 "recipe[cookbook::recipe]"
             ]
-        })
+        }

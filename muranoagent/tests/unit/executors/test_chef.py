@@ -19,13 +19,10 @@ from mock import ANY
 import os
 
 from muranoagent import bunch
-from muranoagent.common import config as cfg
 from muranoagent import exceptions as ex
 from muranoagent.executors import chef
 from muranoagent.tests.unit import base
 from muranoagent.tests.unit import execution_plan as ep
-
-CONF = cfg.CONF
 
 
 class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):

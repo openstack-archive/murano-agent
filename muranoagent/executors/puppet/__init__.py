@@ -16,14 +16,10 @@ import os
 import subprocess
 import yaml
 
-from oslo_log import log as logging
-
 from muranoagent import bunch
 import muranoagent.exceptions
 from muranoagent import executors
 from muranoagent.executors import chef_puppet_executor_base
-
-LOG = logging.getLogger(__name__)
 
 
 @executors.executor('Puppet')

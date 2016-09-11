@@ -19,6 +19,7 @@ to Glance with the following commands:
   $ git clone https://git.openstack.org/openstack/diskimage-builder.git
   $ git clone https://git.openstack.org/openstack/murano-agent.git
   $ export ELEMENTS_PATH=murano-agent/contrib/elements
+  $ export DIB_CLOUD_INIT_DATASOURCES=OpenStack
   $ diskimage-builder/bin/disk-image-create vm ubuntu \
     murano-agent -o ubuntu-murano-agent.qcow2
   $ glance image-create --disk-format qcow2 --container-format bare \

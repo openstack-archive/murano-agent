@@ -127,7 +127,7 @@ class FilesManager(object):
             else:
                 mns = ("Error to download the file {0}: {1}".
                        format(url_file, e.message))
-            LOG.warn(mns)
+            LOG.warning(mns)
             raise ValueError(mns)
         return folder
 

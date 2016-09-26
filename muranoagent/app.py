@@ -47,7 +47,7 @@ class MuranoAgent(service.Service):
             LOG.debug('Loading plugin %s', name)
             __import__(name)
         except Exception:
-            LOG.warn('Cannot load package %s', name, exc_info=True)
+            LOG.warning('Cannot load package %s', name, exc_info=True)
             pass
 
     def _load(self):
@@ -142,7 +142,7 @@ class MuranoAgent(service.Service):
             except KeyboardInterrupt:
                 break
             except Exception:
-                LOG.warn('Communication error', exc_info=True)
+                LOG.warning('Communication error', exc_info=True)
                 time.sleep(delay)
                 delay = min(delay * 1.2, 60)
 
@@ -164,7 +164,7 @@ class MuranoAgent(service.Service):
 
                 self._send_result(execution_result)
             except ValueError:
-                LOG.warn('Execution result is not produced')
+                LOG.warning('Execution result is not produced')
 
     def _verify_plan(self, plan):
         plan_format_version = semantic_version.Version(

@@ -97,7 +97,7 @@ namespace Mirantis.Murano.WindowsAgent
 						{
 							currentResults.Add(new ExecutionResult {
 								IsException = false,
-								Result = result.Select(SerializePsObject).Where(obj => obj != null).ToList()
+								Result = result.Where(obj => obj != null).Select(SerializePsObject).ToList()
 							});
 						}
 					}

@@ -47,3 +47,7 @@ etc/muranoagent/muranoagent.conf.sample
 
 # Files created by releasenotes build
 releasenotes/build
+
+# Coverage
+.coverage
+cover/

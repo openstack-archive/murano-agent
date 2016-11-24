@@ -70,11 +70,13 @@ class ApplicationExecutor(object):
         LOG.debug("Script {0} execution finished "
                   "with retcode: {1}".format(script_name, retcode))
         if stdout is not None:
-            stdout = stdout.decode('utf-8')
+            if hasattr(stdout, 'decode'):
+                stdout = stdout.decode('utf-8')
             LOG.debug(u"'{0}' execution stdout: "
                       u"'{1}'".format(script_name, stdout))
         if stderr is not None:
-            stderr = stderr.decode('utf-8')
+            if hasattr(stderr, 'decode'):
+                stderr = stderr.decode('utf-8')
             LOG.debug(u"'{0}' execution stderr: "
                       u"'{1}'".format(script_name, stderr))
         result = {

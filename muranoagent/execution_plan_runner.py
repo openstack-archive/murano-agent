@@ -43,7 +43,7 @@ class ExecutionPlanRunner(object):
     @staticmethod
     def _unindent(script, initial_indent):
         lines = script.expandtabs(4).split('\n')
-        min_indent = sys.maxint
+        min_indent = six.MAXSIZE
         for line in lines:
             indent = -1
             for i, c in enumerate(line):

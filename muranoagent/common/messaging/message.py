@@ -33,6 +33,8 @@ class Message(object):
 
         try:
             if message_handle:
+                if isinstance(message_handle.body, bytes):
+                    message_handle.body = message_handle.body.decode('utf-8')
                 self.body = anyjson.loads(message_handle.body)
             else:
                 self.body = None

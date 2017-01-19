@@ -47,6 +47,7 @@ rabbit_opts = [
                default='guest'),
     cfg.StrOpt('password',
                help='The RabbitMQ password.',
+               secret=True,
                default='guest'),
     cfg.StrOpt('virtual_host',
                help='The RabbitMQ virtual host.',

@@ -19,13 +19,14 @@ import ssl as ssl_module
 import anyjson
 import eventlet
 import kombu
+from oslo_service import sslutils
 
 from muranoagent.common.messaging import subscription
 
 
 class MqClient(object):
     def __init__(self, login, password, host, port, virtual_host,
-                 ssl=False, ca_certs=None, insecure=False):
+                 ssl=False, ssl_version=None, ca_certs=None, insecure=False):
         ssl_params = None
 
         if ssl:
@@ -35,10 +36,18 @@ class MqClient(object):
                     cert_reqs = ssl_module.CERT_OPTIONAL
                 else:
                     cert_reqs = ssl_module.CERT_NONE
+
             ssl_params = {
                 'ca_certs': ca_certs,
                 'cert_reqs': cert_reqs
             }
+
+            if ssl_version:
+                key = ssl_version.lower()
+                try:
+                    ssl_params['ssl_version'] = sslutils._SSL_PROTOCOLS[key]
+                except KeyError:
+                    raise RuntimeError("Invalid SSL version: %s" % ssl_version)
 
         # Time interval after which RabbitMQ will disconnect client if no
         # heartbeats were received. Usually client sends 2 heartbeats during

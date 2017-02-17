@@ -31,8 +31,8 @@ to Glance with the following commands:
   $ export DIB_CLOUD_INIT_DATASOURCES=OpenStack
   $ diskimage-builder/bin/disk-image-create vm ubuntu \
     murano-agent -o ubuntu-murano-agent.qcow2
-  $ glance image-create --disk-format qcow2 --container-format bare \
-    --name ubuntu-murano --file ubuntu-murano.qcow2 \
+  $ openstack image create ubuntu-murano --disk-format qcow2
+    --container-format bare --file ubuntu-murano-agent.qcow2 \
     --property murano_image_info='{"title": "Ubuntu for Murano", "type": "linux"}'
 
 Project Resources

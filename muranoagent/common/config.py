@@ -37,10 +37,10 @@ message_routing_opt = [
 ]
 
 rabbit_opts = [
-    cfg.StrOpt('host',
-               help='The RabbitMQ broker address which used for communication '
-               'with Murano guest agents.',
-               default='localhost'),
+    cfg.HostAddressOpt('host',
+                       help='The RabbitMQ broker address which used for '
+                            'communication with Murano guest agents.',
+                       default='localhost'),
     cfg.IntOpt('port', help='The RabbitMQ broker port.', default=5672),
     cfg.StrOpt('login',
                help='The RabbitMQ login.',

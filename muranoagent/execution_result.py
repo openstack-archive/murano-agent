@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import six
-import uuid
 
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 
 from muranoagent import exceptions as exc
 
@@ -29,7 +29,7 @@ class ExecutionResult(object):
 
         return {
             'FormatVersion': '2.0.0',
-            'ID': uuid.uuid4().hex,
+            'ID': uuidutils.generate_uuid(dashed=False),
             'SourceID': execution_plan.ID,
             'Action': 'Execution:Result',
             'ErrorCode': 0,
@@ -55,7 +55,7 @@ class ExecutionResult(object):
 
         return {
             'FormatVersion': '2.0.0',
-            'ID': uuid.uuid4().hex,
+            'ID': uuidutils.generate_uuid(dashed=False),
             'SourceID': execution_plan.ID,
             'Action': 'Execution:Result',
             'ErrorCode': error_code,

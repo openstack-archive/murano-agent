@@ -138,8 +138,7 @@ html_title = 'Murano Agent'
 #html_last_updated_fmt = '%b %d, %Y'
 git_cmd = ["git", "log", "--pretty=format:'%ad, commit %h'", "--date=local",
            "-n1"]
-html_last_updated_fmt = subprocess.Popen(
-    git_cmd, stdout=subprocess.PIPE).communicate()[0]
+html_last_updated_fmt = subprocess.check_output(git_cmd)
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.

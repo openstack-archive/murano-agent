@@ -36,7 +36,7 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
         super(TestApp, self).setUp()
         mock_path.return_value = True
         self.agent = app.MuranoAgent()
-        CONF.set_override('storage', 'cache', enforce_type=True)
+        CONF.set_override('storage', 'cache')
         self.addCleanup(CONF.clear_override, 'storage')
 
     def test_verify_execution_plan_downloable(self):

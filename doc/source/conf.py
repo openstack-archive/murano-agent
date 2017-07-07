@@ -37,6 +37,9 @@ sys.path.insert(0, os.path.abspath('../../muranoagent'))
 #extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.coverage',
 #              'sphinx.ext.pngmath', 'sphinx.ext.viewcode', 'sphinxcontrib.httpdomain']
 
+extensions = [
+    'openstackdocstheme',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
@@ -112,6 +115,15 @@ pygments_style = 'sphinx'
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
 
+html_theme = 'openstackdocs'
+# openstackdocstheme options
+repository_name = 'openstack/murano-agent'
+bug_project = 'murano'
+bug_tag = ''
+
+# Must set this variable to include year, month, day, hours, and minutes.
+html_last_updated_fmt = '%Y-%m-%d %H:%M'
+
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 html_title = 'Murano Agent'
@@ -136,9 +148,6 @@ html_title = 'Murano Agent'
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 #html_last_updated_fmt = '%b %d, %Y'
-git_cmd = ["git", "log", "--pretty=format:'%ad, commit %h'", "--date=local",
-           "-n1"]
-html_last_updated_fmt = subprocess.check_output(git_cmd)
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.

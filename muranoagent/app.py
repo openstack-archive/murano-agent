@@ -19,6 +19,7 @@ import time
 
 from oslo_log import log as logging
 from oslo_service import service
+from oslo_utils import strutils
 import semantic_version
 import six
 
@@ -77,7 +78,8 @@ class MuranoAgent(service.Service):
 
         plan = self._queue.get_execution_plan()
         if plan is not None:
-            LOG.debug("Got an execution plan '{0}':".format(str(plan)))
+            LOG.debug("Got an execution plan '{0}':".format(
+                strutils.mask_password(str(plan))))
             self._run(plan)
             return
 

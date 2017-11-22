@@ -32,7 +32,12 @@ class ExecutionPlanQueue(object):
     def __init__(self):
         self._plans_folder = os.path.join(CONF.storage, 'plans')
         if not os.path.exists(self._plans_folder):
-            os.makedirs(self._plans_folder)
+            os.makedirs(self._plans_folder, 0o700)
+        else:
+            try:
+                os.chmod(self._plans_folder, 0o700)
+            except OSError:
+                pass
 
     def put_execution_plan(self, execution_plan):
         timestamp = str(int(time.time() * 10000))

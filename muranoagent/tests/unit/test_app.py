@@ -31,8 +31,9 @@ CONF = cfg.CONF
 
 class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
 
+    @mock.patch('os.chmod')
     @mock.patch('os.path.exists')
-    def setUp(self, mock_path):
+    def setUp(self, mock_path, mock_chmod):
         super(TestApp, self).setUp()
         mock_path.return_value = True
         self.agent = app.MuranoAgent()

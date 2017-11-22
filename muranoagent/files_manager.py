@@ -40,7 +40,7 @@ class FilesManager(object):
             CONF.storage, 'files', execution_plan.ID)
         if os.path.exists(self._cache_folder):
             self.clear()
-        os.makedirs(self._cache_folder)
+        os.makedirs(self._cache_folder, 0o700)
 
     def put_file(self, file_id, script):
         if type(file_id) is dict:

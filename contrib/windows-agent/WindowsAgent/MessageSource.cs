@@ -1,25 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.Configuration;
-using System.Linq;
-using System.Net;
 using System.Net.Security;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
 using NLog;
 using RabbitMQ.Client;
 
 namespace Mirantis.Murano.WindowsAgent
 {
-	class RabbitMqClient : IDisposable
+    internal class MessageSource : IDisposable
 	{
-		private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+		private static readonly Logger log = LogManager.GetCurrentClassLogger();
 		private static readonly ConnectionFactory connectionFactory;
+	    private static readonly string queueName;
 		private IConnection currentConnecton;
+	    private readonly SignatureVerifier signatureVerifier;
+        
 
-		static RabbitMqClient()
+		static MessageSource()
 		{
 		    var ssl = new SslOption {
 		        Enabled = bool.Parse(ConfigurationManager.AppSettings["rabbitmq.ssl"] ?? "false"),
@@ -45,49 +58,65 @@ namespace Mirantis.Murano.WindowsAgent
                 RequestedHeartbeat = 10,
                 Ssl = ssl
             };
+		    queueName = ConfigurationManager.AppSettings["rabbitmq.inputQueue"];
 		}
 		
-		public RabbitMqClient()
+		public MessageSource()
 		{
-			
+			this.signatureVerifier = new SignatureVerifier(Encoding.ASCII.GetBytes(queueName));
 		}
 
-		public MqMessage GetMessage()
+		public Message GetMessage()
 		{
-			var queueName = ConfigurationManager.AppSettings["rabbitmq.inputQueue"] ?? Dns.GetHostName().ToLower();
 			try
 			{
-				IConnection connection = null;
+				IConnection connection;
 				lock (this)
 				{
 					connection = this.currentConnecton = this.currentConnecton ?? connectionFactory.CreateConnection();
 				}
 				var session = connection.CreateModel();
 				session.BasicQos(0, 1, false);
-				//session.QueueDeclare(queueName, true, false, false, null);
-				var consumer = new QueueingBasicConsumer(session);
+			    var consumer = new QueueingBasicConsumer(session);
 				var consumeTag = session.BasicConsume(queueName, false, consumer);
-				var e = (RabbitMQ.Client.Events.BasicDeliverEventArgs) consumer.Queue.Dequeue();
-				Action ackFunc = delegate {
-					session.BasicAck(e.DeliveryTag, false);
-					session.BasicCancel(consumeTag);
-					session.Close();
-				};
 
-				return new MqMessage(ackFunc) {
-					Body = Encoding.UTF8.GetString(e.Body),
-					Id = e.BasicProperties.MessageId
-				};
+			    while (true)
+			    {
+			        var e = consumer.Queue.Dequeue();
+			        Action ackFunc = delegate
+			        {
+			            session.BasicAck(e.DeliveryTag, false);
+			            session.BasicCancel(consumeTag);
+			            session.Close();
+			        };
+
+			        byte[] signature = null;
+			        if (e.BasicProperties.Headers.ContainsKey("signature"))
+			        {
+			            signature = (byte[]) e.BasicProperties.Headers["signature"];
+			        }
+
+			        if (this.signatureVerifier.Verify(e.Body, signature))
+			        {
+			            return new Message(ackFunc) {
+			                Body = Encoding.UTF8.GetString(e.Body),
+			                Id = e.BasicProperties.MessageId,
+			            };
+			        }
+
+			        log.Warn("Dropping message with invalid/missing signature");
+			        session.BasicReject(e.DeliveryTag, false);
+			    }
 			}
-			catch (Exception exception)
+			catch (Exception)
 			{
-
-				Dispose();
-				throw;
+			    if (this.currentConnecton == null) return null;
+			    Dispose();
+			    throw;
 			}
 		}
 
-		public void SendResult(MqMessage message)
+		public void SendResult(Message message)
 		{
 			var exchangeName = ConfigurationManager.AppSettings["rabbitmq.resultExchange"] ?? "";
 			var resultRoutingKey = ConfigurationManager.AppSettings["rabbitmq.resultRoutingKey"] ?? "-execution-results";
@@ -95,22 +124,14 @@ namespace Mirantis.Murano.WindowsAgent
 
 			try
 			{
-				IConnection connection = null;
+				IConnection connection;
 				lock (this)
 				{
 					connection = this.currentConnecton = this.currentConnecton ?? connectionFactory.CreateConnection();
 				}
 				var session = connection.CreateModel();
-				/*if (!string.IsNullOrEmpty(resultQueue))
-				{
-					//session.QueueDeclare(resultQueue, true, false, false, null);
-					if (!string.IsNullOrEmpty(exchangeName))
-					{
-						session.ExchangeBind(exchangeName, resultQueue, resultQueue);
-					}
-				}*/
 				var basicProperties = session.CreateBasicProperties();
-				basicProperties.SetPersistent(durable);
+				basicProperties.Persistent = durable;
 				basicProperties.MessageId = message.Id;
 				basicProperties.ContentType = "application/json";
 				session.BasicPublish(exchangeName, resultRoutingKey, basicProperties, Encoding.UTF8.GetBytes(message.Body));
@@ -129,17 +150,12 @@ namespace Mirantis.Murano.WindowsAgent
 			{
 				try
 				{
-					if (this.currentConnecton != null)
-					{
-						this.currentConnecton.Close();
-					}
+				    var connection = this.currentConnecton;
+				    this.currentConnecton = null;
+				    connection.Close();
 				}
 				catch
 				{
-				}
-				finally
-				{
-					this.currentConnecton = null;
 				}
 			}
 		}

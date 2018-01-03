@@ -1,55 +1,69 @@
-﻿using System;
+﻿// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Net;
-using System.Text;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 using NLog;
 
 namespace Mirantis.Murano.WindowsAgent
 {
 	[DisplayName("Murano Agent")]
-	sealed public class Program : WindowsService
+	public sealed class Program : WindowsService
 	{
-		private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+		private static readonly Logger log = LogManager.GetCurrentClassLogger();
 		private volatile bool stop;
 		private Thread thread;
-		private RabbitMqClient rabbitMqClient;
+		private MessageSource messageSource;
 		private int delayFactor = 1;
 		private string plansDir;
 
-		static void Main(string[] args)
+		public static void Main(string[] args)
 		{
-			Start(new Program(), args);
+		    Start(new Program(), args);		    
 		}
 
 		protected override void OnStart(string[] args)
 		{
-			base.OnStart(args);
+		    base.OnStart(args);
 
-			Log.Info("Version 0.5.4");
+			log.Info("Version 0.6");
 
-			this.rabbitMqClient = new RabbitMqClient();
+			this.messageSource = new MessageSource();
 
 			var basePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 			this.plansDir = Path.Combine(basePath, "plans");
-
-
 			if (!Directory.Exists(plansDir))
 			{
-				Directory.CreateDirectory(plansDir);
+			    Directory.CreateDirectory(plansDir);
 			}
 
 			this.thread = new Thread(Loop);
 			this.thread.Start();
 		}
 
-		void Loop()
+	    private void Loop()
 		{
-			const string unknownName = "unknown";
+		    const string unknownName = "unknown";
+		    var executor = new PlanExecutor(this.plansDir);
 			while (!stop)
 			{
 				try
@@ -57,40 +71,45 @@ namespace Mirantis.Murano.WindowsAgent
 					foreach (var file in Directory.GetFiles(this.plansDir, "*.json.result")
 						.Where(file => !File.Exists(Path.Combine(this.plansDir, Path.GetFileNameWithoutExtension(file)))))
 					{
-						var id = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file)) ?? unknownName;
+						var id = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file));
 						if (id.Equals(unknownName, StringComparison.InvariantCultureIgnoreCase))
 						{
 							id = "";
 						}
 
 						var result = File.ReadAllText(file);
-						Log.Info("Sending results for {0}", id ?? unknownName);
-						rabbitMqClient.SendResult(new MqMessage { Body = result, Id =  id });
+						log.Info("Sending results for {0}", id);
+						messageSource.SendResult(new Message { Body = result, Id =  id });
 						File.Delete(file);
 					}
 
 					var path = Directory.EnumerateFiles(this.plansDir, "*.json").FirstOrDefault();
 					if (path == null)
 					{
-						var message = rabbitMqClient.GetMessage();
-						var id = message.Id;
-						if(string.IsNullOrEmpty(id))
-						{
-							id = unknownName;
-						}
-						
-						path = Path.Combine(this.plansDir, string.Format("{0}.json", id));
-						File.WriteAllText(path, message.Body);
-						Log.Info("Received new execution plan {0}", id);
-						message.Ack();
+					    using (var message = messageSource.GetMessage())
+					    {
+					        if (message == null)
+					        {
+                                return;
+					        }
+					        var id = message.Id;
+					        if (string.IsNullOrEmpty(id))
+					        {
+					            id = unknownName;
+					        }
+
+					        path = Path.Combine(this.plansDir, string.Format("{0}.json", id));
+					        File.WriteAllText(path, message.Body);
+					        log.Info("Received new execution plan {0}", id);
+					    }
 					}
 					else
 					{
 						var id = Path.GetFileNameWithoutExtension(path);
-						Log.Info("Executing exising plan {0}", id);
+						log.Info("Executing exising plan {0}", id);
 					}
-					var executor = new PlanExecutor(path);
-					executor.Execute();
+					
+					executor.Execute(path);
 					File.Delete(path);
 					delayFactor = 1;
 
@@ -104,23 +123,13 @@ namespace Mirantis.Murano.WindowsAgent
 				{
 					WaitOnException(exception);
 				}
-				
 			}
-
 		}
 
 		private void Reboot()
 		{
-			Log.Info("Going for reboot!!");
+			log.Info("Going for reboot!!");
 			LogManager.Flush();
-			/*try
-			{
-				System.Diagnostics.Process.Start("shutdown.exe", "-r -t 0");
-			}
-			catch (Exception ex)
-			{
-				Log.ErrorException("Cannot execute shutdown.exe", ex);
-			}*/
 
 		
 			try
@@ -130,24 +139,23 @@ namespace Mirantis.Murano.WindowsAgent
 			catch (Exception exception)
 			{
 
-				Log.FatalException("Reboot exception", exception);
+				log.Fatal(exception, "Reboot exception");
 			}
 			finally
 			{
-				Log.Info("Waiting for reboot");
+				log.Info("Waiting for reboot");
 				for (var i = 0; i < 10 * 60 * 5 && !stop; i++)
 				{
 					Thread.Sleep(100);
 				}
-				Log.Info("Done waiting for reboot");
+				log.Info("Done waiting for reboot");
 			}
-
 		}
 
 		private void WaitOnException(Exception exception)
 		{
 			if (stop) return;
-			Log.WarnException("Exception in main loop", exception);
+			log.Warn(exception, "Exception in main loop");
 			var i = 0;
 			while (!stop && i < 10 * (delayFactor * delayFactor))
 			{
@@ -160,9 +168,8 @@ namespace Mirantis.Murano.WindowsAgent
 		protected override void OnStop()
 		{
 			stop = true;
-			this.rabbitMqClient.Dispose();
+			this.messageSource.Dispose();
 			base.OnStop();
 		}
-
 	}
 }

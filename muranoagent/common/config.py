@@ -24,17 +24,20 @@ from muranoagent import version
 
 CONF = cfg.CONF
 
-storage_opt = [
+opts = [
     cfg.StrOpt('storage',
                default='/var/murano/plans',
-               help='Directory to store execution plans')
+               help='Directory to store execution plans'),
+
+    cfg.StrOpt('engine_key',
+               help='Public key of murano-engine')
 ]
 
-message_routing_opt = [
-    cfg.BoolOpt('enable_dynamic_result_queue', help='Enable taking dynamic '
-                'result queue from task field reply_to',
-                default=False)
-]
+message_routing_opt = cfg.BoolOpt(
+    'enable_dynamic_result_queue',
+    help='Enable taking dynamic result queue from task field reply_to',
+    default=False)
+
 
 rabbit_opts = [
     cfg.HostAddressOpt('host',
@@ -79,8 +82,8 @@ rabbit_opts = [
 
 ]
 
-CONF.register_cli_opts(storage_opt)
-CONF.register_cli_opts(message_routing_opt)
+CONF.register_opts(opts)
+CONF.register_cli_opt(message_routing_opt)
 CONF.register_opts(rabbit_opts, group='rabbitmq')
 logging.register_options(CONF)
 

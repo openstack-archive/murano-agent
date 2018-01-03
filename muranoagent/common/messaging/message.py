@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import anyjson
 from oslo_log import log as logging
 
 LOG = logging.getLogger("murano-common.messaging")
@@ -27,20 +26,17 @@ class Message(object):
         if message_handle:
             self.id = message_handle.properties.get('message_id')
             self._reply_to = message_handle.properties.get('reply_to')
+            self._signature = message_handle.headers.get('signature')
         else:
             self.id = None
             self._reply_to = None
+            self._signature = None
 
-        try:
-            if message_handle:
-                if isinstance(message_handle.body, bytes):
-                    message_handle.body = message_handle.body.decode('utf-8')
-                self.body = anyjson.loads(message_handle.body)
-            else:
-                self.body = None
-        except ValueError:
+        if message_handle:
+            self.body = message_handle.body
+
+        else:
             self.body = None
-            LOG.exception('Message is not in JSON format')
 
     @property
     def body(self):
@@ -64,3 +60,7 @@ class Message(object):
 
     def ack(self):
         self._message_handle.ack()
+
+    @property
+    def signature(self):
+        return self._signature

@@ -16,8 +16,6 @@ import fixtures
 import mock
 import ssl as ssl_module
 
-from oslo_service import sslutils
-
 from muranoagent import app
 from muranoagent import bunch
 from muranoagent.common import config as cfg
@@ -25,6 +23,7 @@ from muranoagent.common.messaging import mqclient
 from muranoagent import exceptions as exc
 from muranoagent.tests.unit import base
 from muranoagent.tests.unit import execution_plan as ep
+from muranoagent import validation
 
 CONF = cfg.CONF
 
@@ -35,10 +34,14 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
     @mock.patch('os.path.exists')
     def setUp(self, mock_path, mock_chmod):
         super(TestApp, self).setUp()
-        mock_path.return_value = True
+        mock_path.side_effect = self._exists
         self.agent = app.MuranoAgent()
         CONF.set_override('storage', 'cache')
         self.addCleanup(CONF.clear_override, 'storage')
+
+    @staticmethod
+    def _exists(path):
+        return 'stamp' not in path
 
     def test_verify_execution_plan_downloable(self):
         template = self.useFixture(ep.ExPlanDownloable()).execution_plan
@@ -50,13 +53,13 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
             FormatVersion='0.0.0',
         )
         self.assertRaises(exc.IncorrectFormat,
-                          self.agent._verify_plan, template)
+                          validation.validate_plan, template)
 
     def test_verify_over_max_execution_plan(self):
         template = self.useFixture(ep.ExPlanApplication()).execution_plan
         template['FormatVersion'] = '1000.0.0'
         self.assertRaises(exc.IncorrectFormat,
-                          self.agent._verify_plan, template)
+                          validation.validate_plan, template)
 
     def test_verify_execution_application(self):
         template = self.useFixture(ep.ExPlanApplication()).execution_plan
@@ -71,12 +74,12 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
         }
         template['FormatVersion'] = '2.0.0'
         self.assertRaises(exc.IncorrectFormat,
-                          self.agent._verify_plan, template)
+                          validation.validate_plan, template)
 
     def test_verify_execution_plan_no_files(self):
         template = self.useFixture(ep.ExPlanDownloableNoFiles()).execution_plan
         self.assertRaises(exc.IncorrectFormat,
-                          self.agent._verify_plan, template)
+                          validation.validate_plan, template)
 
     def test_verify_execution_plan_berkshelf(self):
         template = self.useFixture(ep.ExPlanBerkshelf()).execution_plan
@@ -85,7 +88,7 @@ class TestApp(base.MuranoAgentTestCase, fixtures.FunctionFixture):
     def test_verify_execution_plan_berkshelf_wrong_version(self):
         template = self.useFixture(ep.ExPlanBerkWrongVersion()).execution_plan
         self.assertRaises(exc.IncorrectFormat,
-                          self.agent._verify_plan, template)
+                          validation.validate_plan, template)
 
     @mock.patch.object(mqclient, 'random', autospec=True)
     @mock.patch.object(mqclient, 'kombu', autospec=True)

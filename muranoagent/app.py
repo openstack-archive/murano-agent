@@ -20,21 +20,17 @@ import time
 from oslo_log import log as logging
 from oslo_service import service
 from oslo_utils import strutils
-import semantic_version
-import six
 
-from muranoagent import bunch
 from muranoagent.common import config
 from muranoagent.common import messaging
-from muranoagent import exceptions as exc
 from muranoagent import execution_plan_queue
 from muranoagent import execution_plan_runner
 from muranoagent import execution_result as ex_result
+from muranoagent import validation
 
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
-max_format_version = semantic_version.Spec('<=2.2.0')
 
 
 class MuranoAgent(service.Service):
@@ -80,10 +76,28 @@ class MuranoAgent(service.Service):
         if plan is not None:
             LOG.debug("Got an execution plan '{0}':".format(
                 strutils.mask_password(str(plan))))
-            self._run(plan)
+            if self._verify_plan(plan):
+                self._run(plan)
             return
 
         next(msg_iterator)
+
+    def _verify_plan(self, plan):
+        try:
+            validation.validate_plan(plan)
+            return True
+        except Exception as err:
+            try:
+                execution_result = ex_result.ExecutionResult.from_error(
+                    err, plan)
+                if 'ReplyTo' in plan and CONF.enable_dynamic_result_queue:
+                    execution_result['ReplyTo'] = plan.ReplyTo
+
+                self._send_result(execution_result)
+            except ValueError:
+                LOG.warning('Execution result is not produced')
+            finally:
+                return False
 
     def _run(self, plan):
         try:
@@ -135,12 +149,18 @@ class MuranoAgent(service.Service):
                                  prefetch_count=1) as subscription:
                         while True:
                             msg = subscription.get_message(timeout=5)
-                            if msg is not None and isinstance(msg.body, dict):
-                                self._handle_message(msg)
+                            if msg is not None:
+                                try:
+                                    self._queue.put_execution_plan(
+                                        msg.body,
+                                        msg.signature,
+                                        msg.id,
+                                        msg.reply_to)
+                                finally:
+                                    msg.ack()
 
                             delay = 5
                             if msg is not None:
-                                msg.ack()
                                 yield
             except KeyboardInterrupt:
                 break
@@ -148,138 +168,3 @@ class MuranoAgent(service.Service):
                 LOG.warning('Communication error', exc_info=True)
                 time.sleep(delay)
                 delay = min(delay * 1.2, 60)
-
-    def _handle_message(self, msg):
-        if 'ID' not in msg.body and msg.id:
-            msg.body['ID'] = msg.id
-        if 'ReplyTo' not in msg.body and msg.reply_to:
-            msg.body['ReplyTo'] = msg.reply_to
-        try:
-            self._verify_plan(msg.body)
-            self._queue.put_execution_plan(msg.body)
-        except Exception as err:
-            try:
-                execution_result = ex_result.ExecutionResult.from_error(
-                    err, bunch.Bunch(msg.body))
-                if ('ReplyTo' in msg.body) and \
-                        CONF.enable_dynamic_result_queue:
-                    execution_result['ReplyTo'] = msg.body.get('ReplyTo')
-
-                self._send_result(execution_result)
-            except ValueError:
-                LOG.warning('Execution result is not produced')
-
-    def _verify_plan(self, plan):
-        plan_format_version = semantic_version.Version(
-            plan.get('FormatVersion', '1.0.0'))
-
-        if plan_format_version not in max_format_version:
-            # NOTE(kazitsev) this is Version in Spec not str in str
-            raise exc.IncorrectFormat(
-                9,
-                "Unsupported format version {0} "
-                "(I support versions {1})".format(
-                    plan_format_version, max_format_version))
-
-        for attr in ('Scripts', 'Files'):
-            if attr not in plan:
-                raise exc.IncorrectFormat(
-                    2, '{0} is not in the execution plan'.format(attr))
-
-        for attr in ('Scripts', 'Files', 'Options'):
-            if attr in plan and not isinstance(
-                    plan[attr], dict):
-                raise exc.IncorrectFormat(
-                    2, '{0} is not a dictionary'.format(attr))
-
-        for name, script in plan.get('Scripts', {}).items():
-            self._validate_script(name, script, plan_format_version, plan)
-
-        for key, plan_file in plan.get('Files', {}).items():
-            self._validate_file(plan_file, key, plan_format_version)
-
-    def _validate_script(self, name, script, plan_format_version, plan):
-        for attr in ('Type', 'EntryPoint'):
-            if attr not in script or not isinstance(script[attr],
-                                                    six.string_types):
-                raise exc.IncorrectFormat(
-                    2, 'Incorrect {0} entry in script {1}'.format(
-                        attr, name))
-
-        if plan_format_version in semantic_version.Spec('>=2.0.0,<2.1.0'):
-            if script['Type'] != 'Application':
-                raise exc.IncorrectFormat(
-                    2, 'Type {0} is not valid for format {1}'.format(
-                        script['Type'], plan_format_version))
-            if script['EntryPoint'] not in plan.get('Files', {}):
-                raise exc.IncorrectFormat(
-                    2, 'Script {0} misses entry point {1}'.format(
-                        name, script['EntryPoint']))
-
-        if plan_format_version in semantic_version.Spec('>=2.1.0'):
-            if script['Type'] not in ('Application', 'Chef', 'Puppet'):
-                raise exc.IncorrectFormat(
-                    2, 'Script has not a valid type {0}'.format(
-                        script['Type']))
-            if (script['Type'] == 'Application' and script['EntryPoint']
-               not in plan.get('Files', {})):
-                    raise exc.IncorrectFormat(
-                        2, 'Script {0} misses entry point {1}'.format(
-                            name, script['EntryPoint']))
-            elif (script['Type'] != 'Application' and
-                  "::" not in script['EntryPoint']):
-                    raise exc.IncorrectFormat(
-                        2, 'Wrong EntryPoint {0} for Puppet/Chef '
-                           'executors. :: needed'.format(script['EntryPoint']))
-
-            for option in script['Options']:
-                if option in ('useBerkshelf', 'berksfilePath'):
-                    if plan_format_version in semantic_version.Spec('<2.2.0'):
-                        raise exc.IncorrectFormat(
-                            2, 'Script has an option {0} invalid '
-                               'for version {1}'.format(option,
-                                                        plan_format_version))
-                    elif script['Type'] != 'Chef':
-                        raise exc.IncorrectFormat(
-                            2, 'Script has an option {0} invalid '
-                               'for type {1}'.format(option, script['Type']))
-
-        for additional_file in script.get('Files', []):
-                mns_error = ('Script {0} misses file {1}'.
-                             format(name, additional_file))
-                if isinstance(additional_file, dict):
-                    if (list(additional_file.keys())[0] not in
-                            plan.get('Files', {}).keys()):
-                        raise exc.IncorrectFormat(2, mns_error)
-                elif additional_file not in plan.get('Files', {}):
-                    raise exc.IncorrectFormat(2, mns_error)
-
-    def _validate_file(self, plan_file, key, format_version):
-        if format_version in semantic_version.Spec('>=2.0.0,<2.1.0'):
-            for plan in plan_file.keys():
-                if plan in ('Type', 'URL'):
-                    raise exc.IncorrectFormat(
-                        2, 'Download file is {0} not valid for this '
-                           'version {1}'.format(key, format_version))
-
-        if 'Type' in plan_file:
-            for attr in ('Type', 'URL', 'Name'):
-                if attr not in plan_file:
-                    raise exc.IncorrectFormat(
-                        2,
-                        'Incorrect {0} entry in file {1}'.format(attr, key))
-
-        elif 'Body' in plan_file:
-            for attr in ('BodyType', 'Body', 'Name'):
-                if attr not in plan_file:
-                    raise exc.IncorrectFormat(
-                        2, 'Incorrect {0} entry in file {1}'.format(
-                            attr, key))
-
-            if plan_file['BodyType'] not in ('Text', 'Base64'):
-                    raise exc.IncorrectFormat(
-                        2, 'Incorrect BodyType in file {1}'.format(key))
-        else:
-            raise exc.IncorrectFormat(
-                2, 'Invalid file {0}: {1}'.format(
-                    key, plan_file))

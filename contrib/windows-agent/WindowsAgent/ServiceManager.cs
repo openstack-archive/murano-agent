@@ -1,4 +1,19 @@
-﻿using System;
+﻿// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.Configuration.Install;
 using System.Reflection;
 using System.ServiceProcess;
@@ -15,7 +30,7 @@ namespace Mirantis.Murano.WindowsAgent
             this.serviceName = serviceName;
         }
 
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        private static readonly Logger log = LogManager.GetCurrentClassLogger();
 
         public bool Restart(string[] args, TimeSpan timeout)
         {
@@ -26,7 +41,7 @@ namespace Mirantis.Murano.WindowsAgent
 
                 service.Stop();
                 service.WaitForStatus(ServiceControllerStatus.Stopped, timeout);
-                Log.Info("Service is stopped");
+                log.Info("Service is stopped");
 
                 // count the rest of the timeout
                 var millisec2 = TimeSpan.FromMilliseconds(Environment.TickCount);
@@ -34,12 +49,12 @@ namespace Mirantis.Murano.WindowsAgent
 
                 service.Start(args);
                 service.WaitForStatus(ServiceControllerStatus.Running, timeout);
-                Log.Info("Service has started");
+                log.Info("Service has started");
                 return true;
             }
             catch (Exception ex)
             {
-                Log.ErrorException("Cannot restart service " + serviceName, ex);
+                log.Error(ex, "Cannot restart service " + serviceName);
                 return false;
             }
         }
@@ -55,7 +70,7 @@ namespace Mirantis.Murano.WindowsAgent
             }
             catch (Exception ex)
             {
-                Log.ErrorException("Cannot stop service " + serviceName, ex);
+                log.Error(ex, "Cannot stop service " + serviceName);
                 return false;
             }
         }
@@ -71,7 +86,7 @@ namespace Mirantis.Murano.WindowsAgent
             }
             catch (Exception ex)
             {
-                Log.ErrorException("Cannot start service " + serviceName, ex);
+                log.Error(ex, "Cannot start service " + serviceName);
                 return false;
             }
         }
@@ -81,11 +96,11 @@ namespace Mirantis.Murano.WindowsAgent
             try
             {
                 ManagedInstallerClass.InstallHelper(
-                    new string[] { Assembly.GetEntryAssembly().Location });
+                    new[] { Assembly.GetEntryAssembly().Location });
             }
             catch(Exception ex)
             {
-                Log.ErrorException("Cannot install service " + serviceName, ex);
+                log.Error(ex, "Cannot install service " + serviceName);
                 return false;
             }
             return true;
@@ -96,11 +111,11 @@ namespace Mirantis.Murano.WindowsAgent
             try
             {
                 ManagedInstallerClass.InstallHelper(
-                    new string[] { "/u", Assembly.GetEntryAssembly().Location });
+                    new[] { "/u", Assembly.GetEntryAssembly().Location });
             }
             catch (Exception ex)
             {
-                Log.ErrorException("Cannot uninstall service " + serviceName, ex);
+                log.Error(ex, "Cannot uninstall service " + serviceName);
                 return false;
             }
             return true;

@@ -1,4 +1,19 @@
-﻿using System;
+﻿// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -12,9 +27,10 @@ using Newtonsoft.Json;
 
 namespace Mirantis.Murano.WindowsAgent
 {
-	class PlanExecutor
+    internal class PlanExecutor
 	{
-		private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+		private static readonly Logger log = LogManager.GetCurrentClassLogger();
+	    private long lastStamp = -1;
 
 		class ExecutionResult
 		{
@@ -22,37 +38,45 @@ namespace Mirantis.Murano.WindowsAgent
 			public object Result { get; set; }
 		}
 
-		private readonly string path;
+		private readonly string baseDir;
 
-		public PlanExecutor(string path)
+		public PlanExecutor(string baseDir)
 		{
-			this.path = path;
+			this.baseDir = baseDir;
 		}
 
 		public bool RebootNeeded { get; set; }
 
-		public void Execute()
+		public void Execute(string path)
 		{
 			RebootNeeded = false;
-			var resultPath = this.path + ".result";
+			var resultPath = path + ".result";
+			var tmpResultPath = resultPath + ".tmp";
 			Runspace runSpace = null;
 			try
 			{
-				var plan = JsonConvert.DeserializeObject<ExecutionPlan>(File.ReadAllText(this.path));
-				List<ExecutionResult> currentResults = null;
+				var plan = JsonConvert.DeserializeObject<ExecutionPlan>(File.ReadAllText(path));
+				List<ExecutionResult> currentResults;
 				try
 				{
-					currentResults = File.Exists(resultPath) ? 
-						JsonConvert.DeserializeObject<List<ExecutionResult>>(File.ReadAllText(resultPath)) : 
+					currentResults = File.Exists(tmpResultPath) ? 
+						JsonConvert.DeserializeObject<List<ExecutionResult>>(File.ReadAllText(tmpResultPath)) : 
 						new List<ExecutionResult>();
 				}
 				catch(Exception exception)
 				{
-					Log.WarnException("Cannot deserialize previous execution result", exception);
+					log.Warn(exception, "Cannot deserialize previous execution result");
 					currentResults = new List<ExecutionResult>();
 				}
 
-				runSpace = RunspaceFactory.CreateRunspace();
+			    var lastStamp = GetLastStamp();
+			    if (plan.Stamp > 0 && plan.Stamp <= lastStamp)
+			    {
+			        log.Warn("Dropping old/duplicate plan");
+			        return;
+			    }
+
+			    runSpace = RunspaceFactory.CreateRunspace();
 				runSpace.Open();
 
 				var runSpaceInvoker = new RunspaceInvoke(runSpace);
@@ -63,36 +87,39 @@ namespace Mirantis.Murano.WindowsAgent
 					foreach (var script in plan.Scripts)
 					{
 						runSpaceInvoker.Invoke(Encoding.UTF8.GetString(Convert.FromBase64String(script)));
-						Log.Debug("Loaded script #{0}", ++index);
+						log.Debug("Loaded script #{0}", ++index);
 					}
 				}
 
 				while (plan.Commands != null && plan.Commands.Any())
 				{
 					var command = plan.Commands.First();
-					Log.Debug("Preparing to execute command {0}", command.Name);
+					log.Debug("Preparing to execute command {0}", command.Name);
 
 					var pipeline = runSpace.CreatePipeline();
-					var psCommand = new Command(command.Name);
-					if (command.Arguments != null)
-					{
-						foreach (var kvp in command.Arguments)
-						{
-							var value = ConvertArgument(kvp.Value);
-							psCommand.Parameters.Add(kvp.Key, value);
-						}
-					}
+				    if (command.Name != null)
+				    {
+				        var psCommand = new Command(command.Name);
+				        if (command.Arguments != null)
+				        {
+				            foreach (var kvp in command.Arguments)
+				            {
+				                var value = ConvertArgument(kvp.Value);
+				                psCommand.Parameters.Add(kvp.Key, value);
+				            }
+				        }
 
-					Log.Info("Executing {0} {1}", command.Name, string.Join(" ",
-						(command.Arguments ?? new Dictionary<string, object>()).Select(
-							t => string.Format("{0}={1}", t.Key, t.Value == null ? "null" : t.Value.ToString()))));
+				        log.Info("Executing {0} {1}", command.Name, string.Join(" ",
+				            (command.Arguments ?? new Dictionary<string, object>()).Select(
+				                t => string.Format("{0}={1}", t.Key, t.Value?.ToString() ?? "null"))));
 
-					pipeline.Commands.Add(psCommand);
+				        pipeline.Commands.Add(psCommand);
+				    }
 
-					try
+				    try
 					{
 						var result = pipeline.Invoke();
-						Log.Debug("Command {0} executed", command.Name);
+						log.Debug("Command {0} executed", command.Name);
 						if (result != null)
 						{
 							currentResults.Add(new ExecutionResult {
@@ -104,21 +131,18 @@ namespace Mirantis.Murano.WindowsAgent
 					catch (Exception exception)
 					{
 						object additionInfo = null;
-						if (exception is ActionPreferenceStopException)
-						{
-							var apse = exception as ActionPreferenceStopException;
-							if (apse.ErrorRecord != null)
-							{
-								additionInfo = new {
-									ScriptStackTrace = apse.ErrorRecord.ScriptStackTrace,
-									PositionMessage = apse.ErrorRecord.InvocationInfo.PositionMessage
-								};
-								exception = apse.ErrorRecord.Exception;
-							}
-						}
+					    var apse = exception as ActionPreferenceStopException;
+					    if (apse?.ErrorRecord != null)
+					    {
+					        additionInfo = new {
+					            ScriptStackTrace = apse.ErrorRecord.ScriptStackTrace,
+					            PositionMessage = apse.ErrorRecord.InvocationInfo.PositionMessage
+					        };
+					        exception = apse.ErrorRecord.Exception;
+					    }
 
 
-						Log.WarnException("Exception while executing command " + command.Name, exception);
+					    log.Warn(exception, "Exception while executing command " + command.Name);
 						currentResults.Add(new ExecutionResult
 						{
 							IsException = true,
@@ -132,10 +156,14 @@ namespace Mirantis.Murano.WindowsAgent
 					{
 						plan.Commands.RemoveFirst();
 						File.WriteAllText(path, JsonConvert.SerializeObject(plan));
-						File.WriteAllText(resultPath, JsonConvert.SerializeObject(currentResults));
+					    File.WriteAllText(tmpResultPath, JsonConvert.SerializeObject(currentResults));
 					}
 				}
 				runSpace.Close();
+			    if (plan.Stamp > 0)
+			    {
+                    SetLastStamp(plan.Stamp);
+			    }
 				var executionResult = JsonConvert.SerializeObject(new ExecutionResult {
 					IsException = false,
 					Result = currentResults
@@ -152,11 +180,12 @@ namespace Mirantis.Murano.WindowsAgent
 						RebootNeeded = true;
 					}
 				}
-				File.WriteAllText(resultPath, executionResult);
+				File.Delete(tmpResultPath);
+			    File.WriteAllText(resultPath, executionResult);
 			}
 			catch (Exception exception)
 			{
-				Log.WarnException("Exception while processing execution plan", exception);
+				log.Warn(exception, "Exception while processing execution plan");
 				File.WriteAllText(resultPath, JsonConvert.SerializeObject(new ExecutionResult {
 					IsException = true,
 					Result = exception.Message
@@ -173,38 +202,33 @@ namespace Mirantis.Murano.WindowsAgent
 					catch
 					{}
 				}
-				Log.Debug("Finished processing of execution plan");
+				log.Debug("Finished processing of execution plan");
 			}
 		}
 
 		private static object ConvertArgument(object arg)
 		{
-			if (arg is JArray)
+			switch (arg)
 			{
-				var array = arg as JArray;
-				return array.Select(ConvertArgument).ToArray();
+			    case JArray array:
+			        return array.Select(ConvertArgument).ToArray();
+			    case JValue value:
+			        return value.Value;
+			    case JObject dict:
+			        var result = new Hashtable();
+			        foreach (var item in dict)
+			        {
+			            result.Add(item.Key, ConvertArgument(item.Value));
+			        }
+			        return result;
 			}
-			else if (arg is JValue)
-			{
-				var value = (JValue) arg;
-				return value.Value;
-			}
-			else if (arg is JObject)
-			{
-				var dict = (JObject)arg;
-				var result = new Hashtable();
-				foreach (var item in dict)
-				{
-					result.Add(item.Key, ConvertArgument(item.Value));
-				}
-				return result;
-			}
-			return arg;
+
+		    return arg;
 		}
 	
 		private static object SerializePsObject(PSObject obj)
 		{
-			if (obj.BaseObject is PSCustomObject)
+		    if (obj.BaseObject is PSCustomObject)
 			{
 				var result = new Dictionary<string, object>();
 				foreach (var property in obj.Properties.Where(p => p.IsGettable))
@@ -219,15 +243,61 @@ namespace Mirantis.Murano.WindowsAgent
 				}
 				return result;
 			}
-			else if (obj.BaseObject is IEnumerable<PSObject>)
-			{
-				return ((IEnumerable<PSObject>) obj.BaseObject).Select(SerializePsObject).ToArray();
-			}
-			else
-			{
-				return obj.BaseObject;
-			}
+
+		    if (obj.BaseObject is IEnumerable<PSObject> objects)
+		    {
+		        return objects.Select(SerializePsObject).ToArray();
+		    }
+
+		    return obj.BaseObject;
 		}
+
+	    private long GetLastStamp()
+	    {
+	        if (this.lastStamp >= 0)
+	        {
+	            return this.lastStamp;
+	        }
+
+	        var path = Path.Combine(this.baseDir, "stamp.txt");
+	        if (File.Exists(path))
+	        {
+	            try
+	            {
+	                var stampData = File.ReadAllText(path);
+	                this.lastStamp = long.Parse(stampData);
+	            }
+	            catch (Exception e)
+	            {
+	                this.lastStamp = 0;
+	            }
+	        }
+	        else
+	        {
+	            this.lastStamp = 0;
+	        }
+
+	        return this.lastStamp;
+	    }
+
+	    private void SetLastStamp(long value)
+	    {
+	        var path = Path.Combine(this.baseDir, "stamp.txt");
+	        try
+	        {
+	            File.WriteAllText(path, value.ToString());
+	        }
+	        catch (Exception e)
+	        {
+	            log.Error(e, "Cannot persist last stamp");
+	            throw;
+	        }
+	        finally
+	        {
+	            this.lastStamp = value;
+	        }
+	    }
 	}
+
 
 }

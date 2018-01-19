@@ -13,22 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Collections.Generic;
+using System;
 
 namespace Mirantis.Murano.WindowsAgent
 {
-    internal class ExecutionPlan
+    internal class Message : IDisposable
 	{
-		public class Command
+		private readonly Action ackFunc;
+
+		public Message(Action ackFunc)
 		{
-			public string Name { get; set; } 
-			public Dictionary<string, object> Arguments { get; set; }
+			this.ackFunc = ackFunc;
+		}
+		
+		public Message()
+		{
 		}
 
-		public string[] Scripts { get; set; }
-		public LinkedList<Command> Commands { get; set; }
-		public int RebootOnCompletion { get; set; }
+		public string Body { get; set; }
+		public string Id { get; set; }
 
-	    public long Stamp { get; set; }
+		public void Dispose()
+		{
+			ackFunc();
+		}
 	}
 }

@@ -28,7 +28,7 @@ def build_list(opt_list):
 _opt_lists = [
     ('rabbitmq', muranoagent.common.config.rabbit_opts),
     (None, build_list([
-        muranoagent.common.config.storage_opt,
+        muranoagent.common.config.opts,
     ]))
 ]
 

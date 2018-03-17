@@ -14,4 +14,4 @@ PyYAML>=3.12 # MIT
 six>=1.10.0 # MIT
 semantic-version>=2.3.1 # BSD
 requests>=2.14.2 # Apache-2.0
-cryptography!=2.0,>=1.9 # BSD/Apache-2.0
+cryptography>=2.1 # BSD/Apache-2.0

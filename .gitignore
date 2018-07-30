@@ -20,9 +20,6 @@ _ReSharper*/
 #IntelJ Idea
 .idea/
 
-#virtualenv
-.venv/
-
 #Build results
 build/
 dist/

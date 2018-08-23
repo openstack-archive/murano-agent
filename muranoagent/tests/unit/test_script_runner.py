@@ -29,11 +29,14 @@ class TestScriptRunner(base.MuranoAgentTestCase):
         super(TestScriptRunner, self).setUp()
         CONF.set_override('storage', 'ss')
 
+    @mock.patch('os.path.join')
     @mock.patch("muranoagent.files_manager.FilesManager")
     @mock.patch("muranoagent.executors.Executors")
-    def test_script_runner_downloable(self, mock_file_manager, mock_executors):
+    def test_script_runner_downloable(self, mock_file_manager, mock_executors,
+                                      mock_os):
         mock_file_manager.put_file.return_value = None
         mock_executors.create_executor.return_value = None
+        mock_os.return_value = '/tmp/1234'
         template = self.get_template_downloable_git()
         scripts = script_runner\
             .ScriptRunner('deploy',

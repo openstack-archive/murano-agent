@@ -17,7 +17,7 @@ Image building using DiskImage-Builder
 --------------------------------------
 
 Folder, named *contrib/elements* contains
-`diskimage-builder <https://git.openstack.org/cgit/openstack/diskimage-builder>`_
+`diskimage-builder <https://opendev.org/openstack/diskimage-builder>`_
 elements to build an image which contains the Murano Agent required to use Murano.
 
 Ubuntu based image containing the agent can be built and uploaded
@@ -25,8 +25,8 @@ to Glance with the following commands:
 
 ::
 
-  $ git clone https://git.openstack.org/openstack/diskimage-builder.git
-  $ git clone https://git.openstack.org/openstack/murano-agent.git
+  $ git clone https://opendev.org/openstack/diskimage-builder.git
+  $ git clone https://opendev.org/openstack/murano-agent.git
   $ export ELEMENTS_PATH=murano-agent/contrib/elements
   $ export DIB_CLOUD_INIT_DATASOURCES=OpenStack
   $ diskimage-builder/bin/disk-image-create vm ubuntu \

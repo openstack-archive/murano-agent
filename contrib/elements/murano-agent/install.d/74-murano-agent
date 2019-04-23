@@ -13,7 +13,7 @@ fi
 
 name=murano-agent
 svc_root=${DIB_MURANO_AGENT_SVC_ROOT:-/opt/stack/$name}
-repo=${DIB_MURANO_AGENT_REPO:-https://git.openstack.org/openstack/murano-agent.git}
+repo=${DIB_MURANO_AGENT_REPO:-https://opendev.org/openstack/murano-agent.git}
 branch=${DIB_MURANO_AGENT_BRANCH:-master}
 ref=${DIB_MURANO_AGENT_REF:-''}
 

@@ -119,7 +119,7 @@ class MuranoAgent(service.Service):
             msg.id = result.get('SourceID')
             routing_key = CONF.rabbitmq.result_routing_key
             if ('ReplyTo' in result) and CONF.enable_dynamic_result_queue:
-                    routing_key = result.pop('ReplyTo')
+                routing_key = result.pop('ReplyTo')
             mq.send(message=msg,
                     key=routing_key,
                     exchange=CONF.rabbitmq.result_exchange)

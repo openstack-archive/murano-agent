@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import six
-
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
@@ -48,7 +46,7 @@ class ExecutionResult(object):
         if isinstance(error, int):
             error_code = error
         elif isinstance(error, Exception):
-            message = six.text_type(error)
+            message = str(error)
             if isinstance(error, exc.AgentException):
                 error_code = error.error_code
                 additional_info = error.additional_data

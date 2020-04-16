@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import semantic_version
-import six
 
 from muranoagent import exceptions as exc
 
@@ -54,8 +53,7 @@ def validate_plan(plan):
 
 def _validate_script(name, script, plan_format_version, plan):
     for attr in ('Type', 'EntryPoint'):
-        if attr not in script or not isinstance(script[attr],
-                                                six.string_types):
+        if attr not in script or not isinstance(script[attr], str):
             raise exc.IncorrectFormat(
                 2, 'Incorrect {0} entry in script {1}'.format(
                     attr, name))

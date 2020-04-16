@@ -46,7 +46,7 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         self.assertEqual(json.loads(node), self.get_node_atts())
 
     @mock.patch('subprocess.Popen')
-    @mock.patch('six.moves.builtins.open')
+    @mock.patch('builtins.open')
     @mock.patch('os.path.exists')
     @mock.patch('os.path.isdir')
     def test_cookbook(self, mock_isdir, mock_exist, open_mock,
@@ -69,7 +69,7 @@ class TestChefExecutor(base.MuranoAgentTestCase, fixtures.TestWithFixtures):
         self.chef_executor.run('test')
 
     @mock.patch('subprocess.Popen')
-    @mock.patch('six.moves.builtins.open')
+    @mock.patch('builtins.open')
     @mock.patch('os.path.exists')
     @mock.patch('os.path.isdir')
     def test_cookbook_error(self, mock_isdir, mock_exist, open_mock,

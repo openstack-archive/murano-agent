@@ -23,7 +23,7 @@ import subprocess
 
 from oslo_log import log as logging
 from oslo_utils import encodeutils
-from six.moves import urllib
+import urllib
 
 from muranoagent.common import config
 

@@ -69,7 +69,6 @@ requestsexceptions==1.4.0
 rfc3986==1.1.0
 Routes==2.4.1
 semantic-version==2.6.0
-six==1.11.0
 smmap2==2.0.3
 snowballstemmer==1.2.1
 Sphinx==1.6.5

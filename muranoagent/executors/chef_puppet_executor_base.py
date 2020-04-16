@@ -18,7 +18,6 @@ import os
 import subprocess
 
 from oslo_log import log as logging
-import six
 
 from muranoagent import bunch
 import muranoagent.exceptions
@@ -74,7 +73,7 @@ class ChefPuppetExecutorBase(object):
         retcode = process.poll()
 
         if stdout is not None:
-            if not isinstance(stdout, six.text_type):
+            if not isinstance(stdout, str):
                 stdout = stdout.decode('utf-8')
             LOG.debug(u"'{0}' execution stdout: "
                       u"'{1}'".format(self.module_name, stdout))

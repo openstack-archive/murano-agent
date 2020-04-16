@@ -15,8 +15,6 @@
 
 import sys
 
-import six
-
 from muranoagent import bunch
 from muranoagent import files_manager as fm
 from muranoagent import script_runner
@@ -35,7 +33,7 @@ class ExecutionPlanRunner(object):
             "args": bunch.Bunch(self._execution_plan.get('Parameters') or {})
         }
         script_globals.update(self._script_funcs)
-        six.exec_(self._main_script, script_globals)
+        exec(self._main_script, script_globals)
         if '__execution_plan_exception' in script_globals:
             raise script_globals['__execution_plan_exception']
         return script_globals['__execution_plan_result']
@@ -43,7 +41,7 @@ class ExecutionPlanRunner(object):
     @staticmethod
     def _unindent(script, initial_indent):
         lines = script.expandtabs(4).split('\n')
-        min_indent = six.MAXSIZE
+        min_indent = sys.maxsize
         for line in lines:
             indent = -1
             for i, c in enumerate(line):

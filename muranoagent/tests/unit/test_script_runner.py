@@ -13,7 +13,7 @@
 #    under the License.
 
 import git
-import mock
+from unittest import mock
 
 from muranoagent import bunch
 from muranoagent.common import config as cfg

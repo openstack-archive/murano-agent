@@ -47,7 +47,7 @@ add_function_parentheses = True
 add_module_names = True
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -60,12 +60,10 @@ pygments_style = 'sphinx'
 html_theme = 'openstackdocs'
 
 # openstackdocstheme options
-repository_name = 'openstack/murano-agent'
-bug_project = 'murano'
-bug_tag = ''
-
-# Must set this variable to include year, month, day, hours, and minutes.
-html_last_updated_fmt = '%Y-%m-%d %H:%M'
+openstackdocs_repo_name = 'openstack/murano-agent'
+openstackdocs_auto_name = False
+openstackdocs_bug_project = 'murano'
+openstackdocs_bug_tag = ''
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project

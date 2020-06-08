@@ -12,12 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from unittest import mock
-
 import fixtures
 import json
-from mock import ANY
 import os
+from unittest import mock
+from unittest.mock import ANY
 
 from muranoagent import bunch
 from muranoagent import exceptions as ex

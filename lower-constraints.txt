@@ -5,7 +5,7 @@ appdirs==1.4.3
 asn1crypto==0.24.0
 Babel==2.5.3
 certifi==2018.1.18
-cffi==1.11.5
+cffi==1.14.0
 chardet==3.0.4
 coverage==4.5.1
 cryptography==2.1.4
@@ -27,7 +27,7 @@ imagesize==1.0.0
 iso8601==0.1.12
 Jinja2==2.10
 keystoneauth1==3.4.0
-kombu==4.1.0
+kombu==4.3.0
 linecache2==1.0.0
 MarkupSafe==1.0
 mccabe==0.2.1
@@ -59,7 +59,7 @@ python-dateutil==2.7.0
 python-mimeparse==1.6.0
 python-subunit==1.2.0
 pytz==2018.3
-PyYAML==3.12
+PyYAML==3.13
 repoze.lru==0.7
 requests==2.18.4
 requestsexceptions==1.4.0

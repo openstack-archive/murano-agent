@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import base64
 import json
 import os
 import shutil
@@ -27,6 +26,7 @@ from oslo_log import log as logging
 
 from muranoagent import bunch
 from muranoagent.common import config
+from muranoagent import util
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -58,13 +58,14 @@ class ExecutionPlanQueue(object):
         os.mkdir(folder_path)
         plan_file_path = os.path.join(
             folder_path, ExecutionPlanQueue.plan_filename)
+        json_plan = json.dumps({
+            'Data': util.b64encode(execution_plan),
+            'Signature': util.b64encode(signature or ''),
+            'ID': msg_id,
+            'ReplyTo': reply_to
+        })
         with open(plan_file_path, 'wb') as out_file:
-            out_file.write(json.dumps({
-                'Data': base64.b64encode(execution_plan),
-                'Signature': base64.b64encode(signature or ''),
-                'ID': msg_id,
-                'ReplyTo': reply_to
-            }))
+            out_file.write(json_plan)
 
     def _get_first_timestamp(self, filename):
         def predicate(folder):
@@ -94,9 +95,9 @@ class ExecutionPlanQueue(object):
                 return None
 
             try:
-                data = base64.b64decode(ep_info['Data'])
+                data = util.b64decode(ep_info['Data'])
                 if self._key:
-                    signature = base64.b64decode(ep_info['Signature'])
+                    signature = util.b64decode(ep_info['Signature'])
                     self._verify_signature(data, signature)
 
                 ep = json.loads(data)

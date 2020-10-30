@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import base64
 import git
 import os
 import re
@@ -26,6 +25,7 @@ from oslo_utils import encodeutils
 import urllib
 
 from muranoagent.common import config
+from muranoagent import util
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class FilesManager(object):
             if body_type == 'Text':
                 out_file.write(filedef['Body'])
             elif body_type == 'Base64':
-                out_file.write(base64.b64decode(filedef['Body']))
+                out_file.write(util.b64decode(filedef['Body']))
 
         self._fetched_files[file_id] = out_path
         return out_path

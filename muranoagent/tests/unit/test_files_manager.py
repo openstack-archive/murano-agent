@@ -36,19 +36,19 @@ class TestFileManager(base.MuranoAgentTestCase):
         CONF.set_override('storage', 'cache')
 
     def test_is_svn(self):
-        files = files_manager.FilesManager(self.get_template_downloable())
+        files = files_manager.FilesManager(self.get_template_downloable(1))
         self.assertTrue(files._is_svn_repository("https://sdfa/svn/ss"))
 
     def test_is_svn_first(self):
-        files = files_manager.FilesManager(self.get_template_downloable())
+        files = files_manager.FilesManager(self.get_template_downloable(2))
         self.assertTrue(files._is_svn_repository("svn://test"))
 
     def test_is_svn_wrong_http_protocol(self):
-        files = files_manager.FilesManager(self.get_template_downloable())
+        files = files_manager.FilesManager(self.get_template_downloable(3))
         self.assertFalse(files._is_svn_repository("httpp://sdfa/svn/ss"))
 
     def test_is_svn_wrong_svn_slash(self):
-        files = files_manager.FilesManager(self.get_template_downloable())
+        files = files_manager.FilesManager(self.get_template_downloable(4))
         self.assertFalse(files._is_svn_repository("svn:sdfa/svn/ss"))
 
     @mock.patch("git.Git")
@@ -63,7 +63,7 @@ class TestFileManager(base.MuranoAgentTestCase):
         mock_path.return_value = True
         mock_git.clone.return_value = None
         template = self.get_template_downloable_git()
-        files = files_manager.FilesManager(self.get_template_downloable())
+        files = files_manager.FilesManager(self.get_template_downloable(5))
         files._download_url_file(template.Files['mycoockbook'], "script")
 
     @mock.patch('os.path.isdir')
@@ -83,8 +83,8 @@ class TestFileManager(base.MuranoAgentTestCase):
         mock_requests.return_value = None
         self._open_mock(open_mock)
 
-        template = self.get_template_downloable()
-        files = files_manager.FilesManager(self.get_template_downloable())
+        template = self.get_template_downloable(6)
+        files = files_manager.FilesManager(self.get_template_downloable(6))
         files._download_url_file(template.Files['file'], "script")
 
     @mock.patch('subprocess.Popen')
@@ -173,7 +173,7 @@ class TestFileManager(base.MuranoAgentTestCase):
             }
         )
 
-    def get_template_downloable(self):
+    def get_template_downloable(self, file_id):
         return bunch.Bunch(
             ID='ID',
             Files={

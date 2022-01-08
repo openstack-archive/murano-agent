@@ -7,8 +7,20 @@ wget:
 make:
 gcc:
 python-pip:
+  dib_python_version: 2
+python3-pip:
+  dib_python_version: 3
 python-dev:
+  dib_python_version: 2
+python3-dev:
+  dib_python_version: 3
 python-setuptools:
+  dib_python_version: 2
+python3-setuptools:
+  dib_python_version: 3
 python-virtualenv:
+  dib_python_version: 2
+python3-virtualenv:
+  dib_python_version: 3
 iptables:
 virtualenvwrapper:

@@ -16,8 +16,8 @@
 import random
 import ssl as ssl_module
 
-import anyjson
 import eventlet
+import json
 import kombu
 from oslo_service import sslutils
 
@@ -138,7 +138,7 @@ class MqClient(object):
         producer.publish(
             exchange=str(exchange),
             routing_key=str(key),
-            body=anyjson.dumps(message.body),
+            body=json.dumps(message.body),
             message_id=str(message.id)
         )
 

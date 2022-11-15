@@ -64,7 +64,7 @@ class ExecutionPlanQueue(object):
             'ID': msg_id,
             'ReplyTo': reply_to
         })
-        with open(plan_file_path, 'wb') as out_file:
+        with open(plan_file_path, 'w') as out_file:
             out_file.write(json_plan)
 
     def _get_first_timestamp(self, filename):

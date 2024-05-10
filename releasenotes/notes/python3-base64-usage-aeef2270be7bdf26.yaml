@@ -1,3 +1,0 @@
----
-fixes:
-  - Fixed a string handling issue with base64 when using Python 3

@@ -1,5 +1,0 @@
-- project:
-    templates:
-      - check-requirements
-      - openstack-python3-jobs
-      - release-notes-jobs-python3
